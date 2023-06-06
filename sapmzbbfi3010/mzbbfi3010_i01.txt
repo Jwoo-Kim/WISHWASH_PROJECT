@@ -1,0 +1,195 @@
+*&---------------------------------------------------------------------*
+*& Include          MZBBFI3010_I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'. " BACK 선택시
+      LEAVE TO SCREEN 0.
+    WHEN 'LIST'. " 문서목록 선택시
+      PERFORM move_to_zbbfi2020.
+    WHEN 'BTN1'. " 조회버튼 선택시
+      IF fi_no IS NOT INITIAL AND fi_year IS NOT INITIAL. " 전표번호, 회계연도 모두 입력시
+        PERFORM check_data_exist.
+      ELSE.
+        IF fi_no IS INITIAL AND fi_year IS NOT INITIAL. " 회계연도만 입력시
+          MESSAGE '전표번호 값을 입력해주세요.' TYPE 'S' DISPLAY LIKE 'E'.
+        ELSEIF fi_year IS INITIAL AND fi_no IS NOT INITIAL. " 전표번호만 입력시
+          MESSAGE '회계연도 값을 입력해주세요.' TYPE 'S' DISPLAY LIKE 'E'.
+        ELSE. " 전표번호, 회계연도 모두 미입력시
+          MESSAGE '전표번호, 회계연도 값을 모두 입력해주세요.' TYPE 'S' DISPLAY LIKE 'E'.
+        ENDIF.
+      ENDIF.
+      WHEN 'CANCEL'.
+        CLEAR : fi_no, fi_year.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANCEL'.
+      CLEAR : fi_no, fi_year.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+
+    WHEN 'BACK'.
+      IF gv_flag = '1'.
+        gv_flag = '0'.
+
+        SET PARAMETER ID 'FLG' FIELD gv_flag.
+        LEAVE TO TRANSACTION 'ZBBFI2010' AND SKIP FIRST SCREEN.
+      ELSEIF gv_flag ='5'.
+        gv_flag = '0'.
+*        gv_flag2 = '1'.
+
+        SET PARAMETER ID 'FLG' FIELD gv_flag.
+*        SET PARAMETER ID 'FLG2' FIELD gv_flag2.
+
+
+
+*        LEAVE TO TRANSACTION 'ZBBFI2020' AND SKIP FIRST SCREEN.
+*        CALL TRANSACTION 'ZBBFI2020'.
+*        gv_flag2 = '0'.
+*
+*        SET PARAMETER ID 'FLG' FIELD gv_flag.
+*        LEAVE TO TRANSACTION 'ZBBFI2020' AND SKIP FIRST SCREEN.
+*        BREAK-POINT.
+      ELSE.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+    WHEN 'HELP'.
+      CALL SCREEN 210
+      STARTING AT 10 10.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CLEAR_SAP_MEMORY  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE clear_sap_memory INPUT.
+  zbbfit_aoj_h-fi_no = ''.
+  zbbfit_aoj_h-fi_year =''.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_200 INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANCEL'.
+      CLEAR : fi_no,
+              fi_year,
+              fi_style,
+              fi_cdate,
+              fi_post_date .
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  GET_CURSOR  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE get_cursor INPUT.
+
+  GET CURSOR FIELD gv_cursor.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0210  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0210 INPUT.
+  CASE ok_code.
+    WHEN 'OKAY'.
+      gv_refresh_flag = '1'.
+      SET SCREEN 0.
+    WHEN 'CANCEL'.
+      LEAVE TO SCREEN 0.
+*  	WHEN .
+*  	WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CONVERSION_ALPHA  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE conversion_alpha INPUT.
+
+  DATA : LT_dynpfields  LIKE TABLE OF dynpread WITH HEADER LINE.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = fi_no
+    IMPORTING
+      output = fi_no.
+
+  LT_dynpfields-fieldname = 'FI_NO'.
+*  LT_dynpfields-STEPL
+  LT_dynpfields-fieldvalue = fi_no.
+*  LT_dynpfields-FIELDINP
+
+  APPEND LT_dynpfields.
+
+  CALL FUNCTION 'DYNP_VALUES_UPDATE'
+    EXPORTING
+      dyname     = sy-cprog
+      dynumb     = sy-dynnr
+    TABLES
+      dynpfields = LT_dynpfields.
+* EXCEPTIONS
+*     INVALID_ABAPWORKAREA       = 1
+*     INVALID_DYNPROFIELD        = 2
+*     INVALID_DYNPRONAME         = 3
+*     INVALID_DYNPRONUMMER       = 4
+*     INVALID_REQUEST            = 5
+*     NO_FIELDDESCRIPTION        = 6
+*     UNDEFIND_ERROR             = 7
+*     OTHERS     = 8
+  .
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CONVERSION_ZERO  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE conversion_zero INPUT.
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = fi_no
+    IMPORTING
+      output = fi_no.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

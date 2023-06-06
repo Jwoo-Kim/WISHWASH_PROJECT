@@ -1,0 +1,147 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2030_TOP
+*&---------------------------------------------------------------------*
+
+DATA : ok_code TYPE sy-ucomm.
+
+TABLES : zbbfit_aoj_h,
+         zbbfit_aoj_i.
+
+DATA : go_container          TYPE  REF TO cl_gui_custom_container,
+       go_container2         TYPE REF TO cl_gui_custom_container,
+       go_split_container    TYPE REF TO cl_gui_splitter_container, "splitter
+       go_general_container  TYPE REF TO cl_gui_container, " splitter row 1 container
+       go_general_container2 TYPE REF TO cl_gui_container, " splitter row 2 container
+       go_alv_grid           TYPE REF TO cl_gui_alv_grid,
+       go_alv_grid2          TYPE REF TO cl_gui_alv_grid, " 인보이스 header
+       go_alv_grid3          TYPE REF TO cl_gui_alv_grid, " 인보이스 item
+       gv_cursor             TYPE brf_cursor_field,
+*       gs_zbbfit_aoj_i       TYPE zbbfit_aoj_i,
+*       gt_zbbfit_aoj_i       TYPE TABLE OF zbbfit_aoj_i,
+*       gt_zbbfit_aoj_i LIKE TABLE OF gs_zbbfit_aoj_i,
+       gs_zbbfit_aoj_h       TYPE zbbfit_aoj_h,
+       gt_zbbfit_aoj_h       LIKE TABLE OF gs_zbbfit_aoj_h,
+       gs_fieldcat           TYPE lvc_s_fcat,
+       gt_fieldcat           TYPE lvc_t_fcat,
+       gs_fieldcat_top       TYPE lvc_s_fcat, " splitter top wa
+       gt_fieldcat_top       TYPE lvc_t_fcat, " splitter top itab
+       gs_fieldcat_bottom    TYPE lvc_s_fcat, " splitter bottom wa
+       gt_fieldcat_bottom    TYPE lvc_t_fcat, " splitter bottom itab
+       gs_layout             TYPE lvc_s_layo,
+       gc_fieldcat           TYPE c VALUE '',
+       gv_lines              TYPE int4, " 전표번호를 채번하기 위한 변수
+       gt_return             TYPE TABLE OF ddshretval WITH HEADER LINE, " 리턴 테이블
+       gt_field              TYPE TABLE OF dfies WITH HEADER LINE, "필드정보 정의 테이블
+       gt_map                TYPE TABLE OF dselc WITH HEADER LINE. " return값  mapping용 테이블.
+
+*DATA : BEGIN OF gs_zbbfit_aoj_i.
+*         INCLUDE STRUCTURE zbbfit_aoj_i.
+*DATA :   dflag TYPE c,
+*       END OF gs_zbbfit_aoj_i,
+*       gt_Zbbfit_aoj_i LIKE TABLE OF gs_zbbfit_aoj_i.
+
+DATA : BEGIN OF gs_zbbfit_aoj_i. " gs_zbbfit_aoj_i형태의 Workarea
+         INCLUDE TYPE zbbfit_aoj_i.
+DATA :   color        TYPE c LENGTH 4, " 신호등 변수
+         bun_name     TYPE dd07t-ddtext, " 차변/대변 텍스트
+         account_name TYPE dd07t-ddtext, " 계정번호 텍스트
+       END OF gs_zbbfit_aoj_i,
+       gt_zbbfit_aoj_i LIKE TABLE OF gs_zbbfit_aoj_i. " gs_zbbfit_aoj_i형태의 itab
+
+DATA : BEGIN OF gs_value," OCCURS 0,
+         inv_no LIKE zbbfit_aoj_h-inv_no, " 헤더의 인보이스를 저장할 변수,
+       END OF gs_value.
+DATA : gt_value LIKE TABLE OF gs_value.
+
+DATA : BEGIN OF gs2_value," OCCURS 0,
+         trans_cd LIKE zbbfit_aoj_h-trans_cd, " 헤더의 인보이스를 저장할 변수,
+       END OF gs2_value.
+DATA : gt2_value LIKE TABLE OF gs2_value.
+
+DATA : BEGIN OF gt_trans OCCURS 0,
+         trans_cd LIKE zbbfit_aoj_i-trans_cd,
+         trans_nm TYPE zbbfit_aoj_i-trans_nm,
+       END OF gt_trans.
+
+DATA : gt_update LIKE dynpread OCCURS 0 WITH HEADER LINE.
+
+DATA : credit_input TYPE zbbfit_aoj_i-money, " 헤더의 차변변수
+       debit_input  TYPE zbbfit_aoj_i-money. " 헤더의 대변변수
+
+DATA : BEGIN OF gt2_trans OCCURS 0,
+         trans_cd LIKE zbbfit_aoj_h-trans_cd,
+         trans_nm LIKE zbbfit_aoj_h-trans_nm,
+       END OF gt2_trans.
+
+DATA : gt2_return    TYPE TABLE OF ddshretval,
+       code_name(30) TYPE c,
+       style_name(5) TYPE c,
+       state_name(5) TYPE c.
+
+DATA : gv_fi_no TYPE zbbfit_aoj_h-fi_no.
+
+DATA : gv_by_inv_no TYPE zbbfit_aoj_h-inv_no.
+
+" mm의 invoice header/item table 변수
+DATA : BEGIN OF gs_inv_h,
+         inv_no     TYPE zbbmmt_invo_h-inv_no,
+         trans_cd   TYPE zbbmmt_invo_h-sp_cd,
+         trans_name TYPE c LENGTH 30,
+         total      TYPE zbbmmt_invo_h-total,
+         currency   TYPE zbbmmt_invo_h-currency,
+         due_dt     TYPE zbbmmt_invo_h-due_dt,
+       END OF gs_inv_h,
+       gt_inv_h LIKE TABLE OF gs_inv_h.
+
+" mm의 invoice header/item table 변수
+DATA : BEGIN OF gs_mmt_inv_i,
+         inv_no   TYPE zbbmmt_invo_i-inv_no,
+         mat_cd   TYPE zbbmmt_invo_i-mat_cd,
+         mat_txt  TYPE zbbe_mat_txt,
+         mat_qt   TYPE zbbmmt_invo_i-mat_qt,
+         mat_unit TYPE zbbmmt_invo_i-mat_unit,
+         per_co   TYPE zbbmmt_invo_i-per_co,
+         currency TYPE zbbmmt_invo_i-currency,
+       END OF gs_mmt_inv_i,
+       gt_mmt_inv_i LIKE TABLE OF gs_mmt_inv_i.
+
+DATA : BEGIN OF gs_sdt_inv_i,
+         inv_no   TYPE zbbsdt_invo_i-inv_no,
+         mat_cd   TYPE zbbsdt_invo_i-ld_cd,
+         mat_txt  TYPE zbbe_mat_txt,
+         mat_qt   TYPE zbbsdt_invo_i-qt,
+         mat_unit TYPE zbbsdt_invo_i-unit,
+         per_co   TYPE zbbsdt_invo_i-unit_price,
+         currency TYPE zbbsdt_invo_i-currency,
+       END OF gs_sdt_inv_i,
+       gt_sdt_inv_i LIKE TABLE OF gs_sdt_inv_i.
+
+DATA : gs_splitter_top_layo    TYPE lvc_s_layo, "top layo
+       gs_splitter_bottom_layo TYPE lvc_s_layo. "bottom layo.
+
+
+
+*DATA : gs_inv_h TYPE zbbmmt_invo_h,
+*       gt_inv_h TYPE TABLE OF zbbmmt_invo_h,
+*       gs_inv_i TYPE zbbmmt_invo_i,
+*       gt_inv_i TYPE TABLE OF zbbmmt_invo_i.
+
+DATA : gv_row   TYPE i,
+       gv_value TYPE c,
+       gv_col   TYPE i,
+       gs_row   TYPE lvc_s_row,
+       gs_col   TYPE lvc_s_col,
+       gs_roid  TYPE lvc_s_roid.
+
+DATA : gv_clear           TYPE c VALUE '0',
+       gv_post_date_clear TYPE c VALUE '0',
+       gv_cursor_flag     TYPE c VALUE '0'. " data_changed에 의해 set cursor를 실행할지 안할지 결정하는 flag 변수.
+
+DATA : balance TYPE i VALUE 0. " 밸런스(차액)를 담을 변수
+
+DATA : gt_exclude TYPE ui_functions. "alv에서 제외할 function code
+DATA : ls_exclude TYPE ui_func.
+DATA : gv_move_to_list(1) TYPE c VALUE '0'.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

@@ -1,0 +1,90 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2010_C01
+*&---------------------------------------------------------------------*
+CLASS: lcl_handler DEFINITION.
+
+  PUBLIC SECTION.
+    CLASS-DATA: gv_rowid TYPE i.
+    CLASS-METHODS:
+      on_doubleclick FOR EVENT double_click
+        OF cl_gui_alv_grid
+        IMPORTING es_row_no.
+*      on_toolbar FOR EVENT toolbar
+*        OF cl_gui_alv_grid
+*        IMPORTING e_object,
+*      on_user_command FOR EVENT user_command
+*        OF cl_gui_alv_grid
+*        IMPORTING e_ucomm,
+*      on_hotspot_click FOR EVENT hotspot_click
+*        OF cl_gui_alv_grid
+*        IMPORTING es_row_no.
+
+ENDCLASS.
+
+CLASS: lcl_handler IMPLEMENTATION.
+  METHOD on_doubleclick.
+
+    READ TABLE gt_zbbfit_aoj_h INTO gs_zbbfit_aoj_h
+                            INDEX es_row_no-row_id.
+*
+    zbbfit_aoj_h-fi_no = gs_zbbfit_aoj_h-fi_no.
+    zbbfit_aoj_h-fi_year = gs_zbbfit_aoj_h-fi_year.
+    zbbfit_aoj_h-state = gs_zbbfit_aoj_h-state.
+    zbbfit_aoj_h-fi_style = gs_zbbfit_aoj_h-fi_style.
+    zbbfit_aoj_h-fi_post_date = gs_zbbfit_aoj_h-fi_post_date.
+    zbbfit_aoj_h-trans_cd = gs_zbbfit_aoj_h-trans_cd.
+    zbbfit_aoj_h-trans_nm = gs_zbbfit_aoj_h-trans_nm.
+    zbbfit_aoj_h-inv_no = gs_zbbfit_aoj_h-inv_no.
+    zbbfit_aoj_h-deadline = gs_zbbfit_aoj_h-deadline.
+    zbbfit_aoj_h-detail = gs_zbbfit_aoj_h-detail.
+    zbbfit_aoj_h-flag = '1'.
+
+*    IF SY-SUBRC <> 0.
+*    ELSE.
+*    ENDIF.
+
+*    gv_flag = '1'.
+*
+*    SET PARAMETER ID 'FIN' FIELD zbbfit_aoj_h-fi_no.
+*    SET PARAMETER ID 'FIY' FIELD zbbfit_aoj_h-fi_year.
+*    SET PARAMETER ID 'STA' FIELD zbbfit_aoj_h-state.
+*    SET PARAMETER ID 'STY' FIELD zbbfit_aoj_h-fi_style.
+*    SET PARAMETER ID 'FIP' FIELD zbbfit_aoj_h-fi_post_date.
+*    SET PARAMETER ID 'TRC' FIELD zbbfit_aoj_h-trans_cd.
+*    SET PARAMETER ID 'TRN' FIELD zbbfit_aoj_h-trans_nm.
+*    SET PARAMETER ID 'INV' FIELD zbbfit_aoj_h-inv_no.
+*    SET PARAMETER ID 'DEA' FIELD zbbfit_aoj_h-deadline.
+*    SET PARAMETER ID 'DET' FIELD zbbfit_aoj_h-detail.
+*    SET PARAMETER ID 'FLG' FIELD gv_flag.
+*
+*    LEAVE TO TRANSACTION 'ZBBFI3010'.
+
+*    PERFORM move_program.
+    CALL SCREEN 200
+    STARTING AT 10 30.
+*    ENDING AT 130 130.
+
+  ENDMETHOD.
+*  METHOD on_hotspot_click.
+*
+**    DATA: lv_producer(10)     TYPE c,
+**          lv_message_text(60) TYPE c.
+**
+*    READ TABLE gt_zbbfit_aoj_h INTO gs_zbbfit_aoj_h
+*                           INDEX es_row_no-row_id.
+**    IF sy-subrc <> 0.
+**      MESSAGE i010.
+**      EXIT.
+**    ENDIF.
+**
+**    lv_producer = gs_plane-producer.
+**    lv_message_text = 'Plane manufacturer is:' &&
+**                      lv_producer.
+**
+**    MESSAGE lv_message_text TYPE 'I'.
+*
+*  ENDMETHOD.
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

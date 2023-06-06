@@ -1,0 +1,51 @@
+*&---------------------------------------------------------------------*
+*& Include MZBBFI3010_TOP                           - Module Pool      SAPMZBBFI3010
+*&---------------------------------------------------------------------*
+PROGRAM sapmzbbfi3010 MESSAGE-ID zbb1.
+
+TYPE-POOLS : col.
+
+TABLES : zbbfit_aoj_h
+         , zbbfit_aoj_i.
+
+DATA : gv_refresh_flag TYPE c,
+       gv_fi_no        TYPE zbbfit_aoj_h-fi_no.
+
+DATA : flag TYPE zbbfit_aoj_h-flag. " input값 클리어를 위한 변수
+
+DATA : ok_code LIKE sy-ucomm.
+DATA : fi_no        TYPE zbbfit_aoj_h-fi_no, " 전표번호
+       fi_year      TYPE zbbfit_aoj_h-fi_year, " 회계연도
+       fi_style     TYPE zbbfit_aoj_h-fi_style, " 전표유형
+       fi_post_date TYPE zbbfit_aoj_h-fi_post_date, " 전기일
+       fi_cdate     TYPE zbbfit_aoj_h-cDATE. " 생성일
+
+
+DATA : BEGIN OF gs_zbbfit_aoj_i. " gs_zbbfit_aoj_i형태의 Workarea
+         INCLUDE TYPE zbbfit_aoj_i.
+DATA :   color        TYPE c LENGTH 4, " 신호등 변수
+         bun_name     TYPE dd07t-ddtext, " 차변/대변 텍스트
+         account_name TYPE dd07t-ddtext, " 계정번호 텍스트
+       END OF gs_zbbfit_aoj_i,
+       gt_zbbfit_aoj_i LIKE TABLE OF gs_zbbfit_aoj_i. " gs_zbbfit_aoj_i형태의 itab
+
+DATA : go_container TYPE REF TO cl_gui_custom_container. " Custom Contatiner
+DATA : go_alv_grid TYPE REF TO cl_gui_alv_grid. " ALV Grid
+DATA : gs_layout TYPE lvc_s_layo. " Layout
+DATA : gs_field_catalog TYPE lvc_s_fcat, " Fieldcat
+       gt_field_catalog TYPE lvc_t_fcat.
+
+DATA : gs_sort TYPE lvc_s_sort, " Sort
+       gt_sort TYPE lvc_t_sort.
+
+DATA :
+  gv_cursor       TYPE brf_cursor_field. " CURSOR
+
+DATA : gv_flag    TYPE c VALUE '0',
+       state_name TYPE dd07t-ddtext,
+       style_name TYPE dd07t-ddtext.
+
+DATA : gv_flag2 TYPE c.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

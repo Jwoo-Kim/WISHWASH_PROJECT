@@ -1,0 +1,568 @@
+*&---------------------------------------------------------------------*
+*& Form form_select
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM form_select.
+  SELECT *
+    FROM zbbfit_aoj_h
+    INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+    WHERE fi_no IN pa_fino
+    AND fi_year IN pa_year
+    AND fi_style IN pa_type
+    AND fi_post_date IN pa_post.
+
+  SORT gt_zbbfit_aoj_h BY fi_no. " 전표번호로 오름차순 sorting
+
+  PERFORM check_select USING sy-subrc.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form show_alv
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM show_alv .
+*CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+* EXPORTING
+*   i_callback_program                = sy-repid
+*   it_fieldcat                       = lt_fieldcat
+*  TABLES
+*    t_outtab                          = gt_zbbfit_aoj_h.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SET_FIELDCAT_ZBBFI2010
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_fieldcat_zbbfi2010 .
+  DATA : pos TYPE i VALUE 1.
+
+  REFRESH gt_fieldcat.
+
+  CLEAR gt_fieldcat.
+  gs_fieldcat-fieldname = 'FI_NO'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_fieldcat-ref_field = 'FI_NO'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-key = 'X'.
+  gs_fieldcat-col_opt = 'X'.
+  gs_fieldcat-just = 'C'.
+*  gs_fieldcat-hotspot = 'X'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_fieldcat.
+  gs_fieldcat-fieldname = 'FI_YEAR'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_fieldcat-ref_field = 'FI_YEAR'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-key = 'X'.
+  gs_fieldcat-col_opt = 'X'.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_fieldcat.
+  gs_fieldcat-fieldname = 'FI_STYLE'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_fieldcat-ref_field = 'FI_STYLE'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-col_opt = 'X'.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_fieldcat.
+  gs_fieldcat-fieldname = 'FI_STYLE_NAME'.
+  gs_fieldcat-coltext = '전표유형이름'.
+*  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_H'.
+*  gs_fieldcat-ref_field = 'FI_STYLE'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-col_opt = 'X'.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_fieldcat.
+  gs_fieldcat-fieldname = 'FI_POST_DATE'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_fieldcat-ref_field = 'FI_POST_DATE'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-col_opt = 'X'.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+
+  pos = pos + 1.
+  CLEAR gs_fieldcat.
+  gs_fieldcat-fieldname = 'CDATE'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_fieldcat-ref_field = 'CDATE'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-just = 'C'.
+  gs_fieldcat-col_opt = 'X'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_data .
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form MOVE_PROGRAM
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM move_program .
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+  gs_layout-grid_title = '☑ 전표를 더블클릭 시 상세내역을 확인할 수 있습니다'.
+  gs_layout-smalltitle = 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_select
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_select USING p_subrc.
+  DATA : lv_line TYPE i. "
+
+  lv_line = lines( gt_zbbfit_aoj_h ).
+
+  IF p_subrc <> 0.
+    MESSAGE e013.
+  ELSE.
+    MESSAGE s003 WITH lv_line.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form show_screen_0100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM show_screen_0100 .
+
+  CALL METHOD go_alv_grid->set_table_for_first_display
+    EXPORTING
+*     i_structure_name = 'ZBBFIT_AOJ_H'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_zbbfit_aoj_h
+      it_fieldcatalog = gt_fieldcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_screen_0100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_screen_0100 .
+
+  CALL METHOD go_alv_grid->refresh_table_display.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form CHECK_DATA_EXIST
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_data_exist .
+
+  SELECT *
+    FROM zbbfit_aoj_h
+    INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+    WHERE fi_no IN pa_fino
+    AND fi_year IN pa_year
+    AND fi_style IN pa_type
+    AND fi_post_date IN pa_post.
+
+  IF sy-subrc = 4.
+    MESSAGE s001 DISPLAY LIKE 'E'.
+  ELSEIF sy-subrc <> 0.
+    MESSAGE s013 DISPLAY LIKE 'E'.
+  ELSE.
+    CALL SCREEN 100.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Module DISPLAY_ALV OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE display_alv OUTPUT.
+  PERFORM get_domain_value_text_scr200.
+*  PERFORM set_item_layout.
+  PERFORM set_fieldcat_src200.
+  PERFORM sort_src200_setting.
+  PERFORM sel_src200_item.
+  PERFORM set_layout_scr200.
+
+  IF go_scr200_container IS INITIAL.
+
+    CREATE OBJECT go_scr200_container
+      EXPORTING
+        container_name = 'CUSTOM_ITEM'.
+
+    CREATE OBJECT go_scr200_alv_grid
+      EXPORTING
+        i_parent = go_scr200_container.
+
+    CALL METHOD go_scr200_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_layout_scr_200
+      CHANGING
+        it_sort         = gt_sort
+        it_outtab       = gt_scr200_item
+        it_fieldcatalog = gt_scr200_fieldcat.
+
+  ELSE.
+
+    CALL METHOD go_scr200_alv_grid->refresh_table_display.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form get_domain_value_text_scr200
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_domain_value_text_scr200 .
+
+  CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+    EXPORTING
+      iv_domname    = 'ZBBD_STATE'
+      iv_value      = zbbfit_aoj_h-state
+    IMPORTING
+      ev_value_text = gubun.
+
+  CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+    EXPORTING
+      iv_domname    = 'ZBBD_FI_STYLE'
+      iv_value      = zbbfit_aoj_h-fi_style
+    IMPORTING
+      ev_value_text = yuhung.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fieldcat_src200
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_fieldcat_src200 .
+
+  DATA : pos TYPE i VALUE 1.
+
+  REFRESH gt_scr200_fieldcat.
+
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'FI_NO'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'FI_NO'.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'FI_LN'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'FI_LN'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'POSITIONS'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'POSITIONS'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'BUN_NAME'.
+  gs_scr200_fieldcat-coltext = '분개'.
+*  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+*  gs_scr200_fieldcat-ref_field = 'POSITIONS'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'ACCOUNT_NO'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'ACCOUNT_NO'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'ACCOUNT_NAME'.
+  gs_scr200_fieldcat-coltext = '계정이름'.
+*  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+*  gs_scr200_fieldcat-ref_field = 'ACCOUNT_NO'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'MONEY'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'MONEY'.
+  gs_scr200_fieldcat-cfieldname = 'CURRENCY'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-do_sum = 'X'.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'R'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'CURRENCY'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'CURRENCY'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sort_src200_setting
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM sort_src200_setting .
+
+  gs_sort-spos = '1'.
+  gs_sort-fieldname = 'FI_NO'.
+  gs_sort-up = 'X'.
+  APPEND gs_sort TO gt_sort.
+
+  gs_sort-spos = '2'.
+  gs_sort-fieldname = 'POSITIONS'.
+  gs_sort-up = 'X'.
+  gs_sort-subtot = 'X'.
+  APPEND gs_sort TO gt_sort.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sel_src200_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM sel_src200_item .
+
+  SELECT *
+    FROM zbbfit_aoj_i
+    INTO CORRESPONDING FIELDS OF TABLE gt_scr200_item
+    WHERE fi_no = zbbfit_aoj_h-fi_no.
+
+  "차변 + 대변 합 = 0
+  CLEAR : gs_scr200_item.
+
+  LOOP AT gt_scr200_item INTO gs_scr200_item.
+
+    IF gs_scr200_item-positions = 'CRE'.
+
+      gs_scr200_item-money = gs_scr200_item-money * ( -1 ).
+
+      MODIFY gt_scr200_item FROM gs_scr200_item TRANSPORTING money.
+
+      CLEAR : gs_scr200_item.
+    ENDIF.
+
+  ENDLOOP.
+
+  " 입금기한 color 설정
+  DATA : lv_date TYPE sy-datum, " 신호등 설정을 위한 지역변수
+         lv_mark TYPE sy-datum.
+
+  lv_date = sy-datum + 7. " 현재 + 7 일
+  lv_mark = 00000000.
+
+  LOOP AT gt_scr200_item INTO gs_scr200_item.
+
+    IF  gs_scr200_item-deadline <> lv_mark
+      AND gs_scr200_item-deadline < sy-datum
+      AND gs_scr200_item-clear_dt IS INITIAL.
+      gs_scr200_item-color = 'C' && col_negative && '10'.
+    ELSEIF gs_scr200_item-deadline <> lv_mark
+      AND sy-datum <= gs_scr200_item-deadline AND gs_scr200_item-deadline <= lv_date
+      AND gs_scr200_item-clear_dt IS INITIAL.
+      gs_scr200_item-color = 'C' && col_total && '10'.
+    ELSEIF gs_scr200_item-deadline <> lv_mark
+      AND lv_date < gs_scr200_item-deadline AND gs_scr200_item-clear_dt IS INITIAL.
+      gs_scr200_item-color = 'C' && col_positive && '10'.
+    ELSE.
+      gs_scr200_item-color = 'C' && col_key && '10'.
+    ENDIF.
+
+    MODIFY gt_scr200_item FROM gs_scr200_item TRANSPORTING color.
+
+    PERFORM add_text_bun_and_account.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'OKAY'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form set_layout_scr200
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_scr200 .
+  gs_layout_scr_200-info_fname = 'COLOR'.
+  gs_layout_scr_200-grid_title = '전표상세내역'.
+  gs_layout_scr_200-smalltitle = 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form ADD_FI_STYLE_NAME_TEXT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM add_fi_style_name_text .
+
+  LOOP AT gt_zbbfit_aoj_h INTO gs_zbbfit_aoj_h.
+    CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+      EXPORTING
+        iv_domname    = 'ZBBD_FI_STYLE'
+        iv_value      = gs_zbbfit_aoj_h-fi_style
+      IMPORTING
+        ev_value_text = gs_zbbfit_aoj_h-fi_style_name.
+
+    MODIFY gt_zbbfit_aoj_h FROM gs_zbbfit_aoj_h INDEX sy-tabix TRANSPORTING fi_style_name.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form ADD_TEXT_BUN_AND_ACCOUNT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM add_text_bun_and_account .
+
+  LOOP AT gt_scr200_item INTO gs_scr200_item.
+    IF gs_scr200_item-positions IS NOT INITIAL.
+*       차변 / 대변 텍스트
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname    = 'ZBBD_POSITION'
+          iv_value      = gs_scr200_item-positions
+        IMPORTING
+          ev_value_text = gs_scr200_item-bun_name.
+    ENDIF.
+
+    IF gs_scr200_item-account_no IS NOT INITIAL.
+* 계정번호 텍스트
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname    = 'ZBBD_ACCOUNT_NO'
+          iv_value      = gs_scr200_item-account_no
+        IMPORTING
+          ev_value_text = gs_scr200_item-account_name.
+    ENDIF.
+
+    MODIFY gt_scr200_item FROM gs_scr200_item INDEX sy-tabix TRANSPORTING bun_name account_name.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_item_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_item_layout.
+  gs_item_layout-grid_title = '전표상세내역'.
+  gs_item_layout-smalltitle = 'X'.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

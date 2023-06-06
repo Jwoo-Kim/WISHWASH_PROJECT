@@ -1,0 +1,1649 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2020_F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form SP_LIST
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM sp_list.
+
+  PERFORM  select_suppliers.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form CL_LIST
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM cl_list.
+
+  PERFORM select_client.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SELECT_CLIENT
+*&---------------------------------------------------------------------*
+*& text : 고객사 리스트
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_client.
+  DATA : lv_key(10) TYPE c.
+  cl_name = 'PA_CL'.
+
+  SELECT *
+    FROM zbbsdt_client
+    INTO CORRESPONDING FIELDS OF TABLE gt_zbbsdt_client.
+
+
+  LOOP AT gt_zbbsdt_client INTO gs_zbbsdt_client.
+    lv_key = sy-tabix.
+
+    cl_value-key = gs_zbbsdt_client-cl_cd.
+    cl_value-text = gs_zbbsdt_client-cl_nm.
+    APPEND cl_value TO cl_list.
+  ENDLOOP.
+
+*   cl_VALUE-key = '1'.
+*  cl_VALUE-text = 'LINE 1'.
+*  APPEND cl_VALUE TO cl_list.
+*
+*  cl_VALUE-key = '2'.
+*  cl_VALUE-text = 'LINE 2'.
+*  APPEND cl_VALUE TO cl_list.
+*
+*  cl_VALUE-key = '3'.
+*  cl_VALUE-text = 'LINE 3'.
+*  APPEND cl_VALUE TO cl_list.
+
+  CALL FUNCTION 'VRM_SET_VALUES'
+    EXPORTING
+      id     = cl_name
+      values = cl_list.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form btn_icon_set
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM btn_icon_set.
+* 조회버튼 icon 세팅
+*  CALL FUNCTION 'ICON_CREATE'
+*    EXPORTING
+*      name   = icon_select_detail
+*      text   = '조회'
+**     INFO   = 'Check out AbapcadabrA.com'
+*    IMPORTING
+*      result = btn_text
+*    EXCEPTIONS
+*      OTHERS = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exclude_initial_btn_run
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exclude_initial_btn_run.
+  gt_exclude-fcode  = 'ONLI'.
+  APPEND gt_exclude.
+
+  CALL FUNCTION 'RS_SET_SELSCREEN_STATUS'
+    EXPORTING
+      p_status  = ' '
+      p_program = 'Z_KW_LEE_002'
+    TABLES
+      p_exclude = gt_exclude[].
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_type
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_type.
+  CASE gc_mark.
+    WHEN pa_all.
+      LOOP AT SCREEN.
+        IF screen-group1 = 'CLI'.
+          screen-active = 0.
+          MODIFY SCREEN.
+        ENDIF.
+        IF screen-group1 = 'SUP'.
+          screen-active = 0.
+          MODIFY SCREEN.
+        ENDIF.
+      ENDLOOP.
+    WHEN pa_IN.
+      LOOP AT SCREEN.
+        IF screen-group1 = 'CLI'.
+          screen-active = 0.
+          MODIFY SCREEN.
+        ENDIF.
+      ENDLOOP.
+    WHEN pa_EX.
+      LOOP AT SCREEN.
+        IF screen-group1 = 'SUP'.
+          screen-active = 0.
+          MODIFY SCREEN.
+        ENDIF.
+      ENDLOOP.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_type_result
+*&---------------------------------------------------------------------*
+*& text : 유형에 따라서 잔액전표를 보여줌.
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_type_result.
+  CASE gc_mark.
+    WHEN pa_all. " 유형 : 전체
+      PERFORM select_all.
+    WHEN pa_ex. " 유형 : 매출
+      PERFORM select_ex.
+    WHEN pa_in. " 유형 : 매입
+      PERFORM select_in.
+  ENDCASE.
+
+*  MESSAGE '조회 클릭' TYPE 'S'.
+*  CALL SCREEN 100.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SET_SCREEN_100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_screen_100.
+  CASE gc_mark.
+    WHEN pa_all.
+      PERFORM select_all.
+    WHEN pa_in.
+      PERFORM select_in.
+    WHEN pa_ex.
+      PERFORM select_ex.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SELECT_SUPPLIERS
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_suppliers.
+  DATA : lv_key(10) TYPE c.
+  cl_name = 'PA_SP'.
+
+  SELECT *
+    FROM zbbmmt_lfa1
+    INTO CORRESPONDING FIELDS OF TABLE gt_zbbmmt_lfa1.
+
+
+  LOOP AT gt_zbbmmt_lfa1 INTO gs_zbbmmt_lfa1.
+    lv_key = sy-tabix.
+
+    sp_VALUE-key = gs_zbbmmt_lfa1-sp_cd.
+    sp_VALUE-text = gs_zbbmmt_lfa1-sp_nm.
+    APPEND sp_VALUE TO sp_list.
+  ENDLOOP.
+
+  CALL FUNCTION 'VRM_SET_VALUES'
+    EXPORTING
+      id     = 'PA_SP'
+      values = sp_list.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_all
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_all.
+  DATA : lv_lines TYPE i VALUE 0.
+
+  REFRESH : gt_zbbfit_aoj_h.
+
+  IF pa_fino IS NOT INITIAL.
+    SELECT *
+    FROM zbbfit_aoj_h
+    INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+    WHERE payment_flag = '0'
+    AND fi_no = pa_fino
+    AND fi_year IN so_day.
+  ELSE.
+    SELECT *
+      FROM zbbfit_aoj_h
+      INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+      WHERE payment_flag = '0'
+      AND fi_year IN so_day.
+  ENDIF.
+
+  lv_lines = lines( gt_zbbfit_aoj_h ).
+  SORT gt_zbbfit_aoj_h BY fi_no ASCENDING.
+
+  IF sy-subrc = 4.
+    MESSAGE s000 WITH '데이터가 존재하지 않습니다.' DISPLAY LIKE 'E'.
+  ELSEIF sy-subrc = 0.
+*    IF gv_msg_flag = '0'.
+    MESSAGE s000 WITH lv_lines && '개 데이터가 성공적으로 조회되었습니다.'.
+*    ENDIF.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s000 WITH '조회 중 오류가 발생하였습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_in
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_in.
+
+  IF pa_sp IS INITIAL.
+    PERFORM ranges_pa_in.
+  ELSE.
+    PERFORM select_sp.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_ex
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_ex.
+
+  IF pa_cl IS INITIAL.
+    PERFORM ranges_pa_ex.
+  ELSE.
+    PERFORM select_cl.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_obj
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_obj.
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'CUSTOM_CONTAINER'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout.
+
+  gs_layout-excp_fname = 'LIGHT'.
+  gs_layout-excp_led = 'X'.
+  gs_layout-grid_title = '☑ 전표를 더블클릭 시 상세내역을 확인할 수 있습니다'.
+  gs_layout-smalltitle = 'X'.
+*  gs_layout_grid1-grid_title = '더블클릭시 상세내용을 확인할 수 있습니다.'.
+*  gs_layout_grid1-zebra = 'X'.
+*  gs_layout_grid1-sel_mode = 'A'.
+
+*  gs_layout-grid_title = '분개장'.
+*  gs_layout-zebra = 'X'.
+*  gs_layout-cwidth_opt = 'X'.
+*  gs_layout-sel_mode = 'A'.
+*  gs_layout-info_fname = 'COLOR'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_field_catalog.
+  DATA : pos TYPE i VALUE 1.
+
+  REFRESH gt_field_catalog.
+
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'FI_NO'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'FI_NO'.
+  gs_field_catalog-outputlen = 12.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'FI_LN'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'FI_LN'.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'PAYMENT'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'PAYMENT'.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'STATE'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'STATE'.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-outputlen = 12.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'POSITIONS'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'POSITIONS'.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'ACCOUNT_NO'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'ACCOUNT_NO'.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'MONEY'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'MONEY'.
+  gs_field_catalog-cfieldname = 'CURRENCY'.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-do_sum = 'X'.
+*  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-outputlen = 10.
+  gs_field_catalog-just = 'R'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'CURRENCY'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'CURRENCY'.
+  gs_field_catalog-col_pos = pos.
+  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'SP_CD'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'SP_CD'.
+  gs_field_catalog-col_pos = pos.
+*  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'DETAIL'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'DETAIL'.
+  gs_field_catalog-col_pos = pos.
+*  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-outputlen = 20.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+  pos = pos + 1.
+  CLEAR gs_field_catalog.
+  gs_field_catalog-fieldname = 'DEADLINE'.
+  gs_field_catalog-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_field_catalog-ref_field = 'DEADLINE'.
+  gs_field_catalog-col_pos = pos.
+*  gs_field_catalog-col_opt = 'X'.
+  gs_field_catalog-outputlen = 8.
+  gs_field_catalog-just = 'C'.
+  APPEND gs_field_catalog TO gt_field_catalog.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fieldcat_header
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_fieldcat_header.
+  DATA : pos TYPE i VALUE 1.
+
+  REFRESH gt_field_hedaer.
+
+  CLEAR gs_field_header.
+  gs_field_header-fieldname = 'LIGHT'.
+  gs_field_header-col_pos = pos.
+  gs_field_header-outputlen = 4.
+  gs_field_header-just = 'C'.
+  gs_field_header-coltext = '상태'.
+  APPEND gs_field_header TO gt_field_hedaer.
+
+  pos = pos + 1.
+  CLEAR gs_field_header.
+  gs_field_header-fieldname = 'FI_NO'.
+  gs_field_header-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_field_header-ref_field = 'FI_NO'.
+  gs_field_header-col_pos = pos.
+  gs_field_header-key = 'X'.
+  gs_field_header-col_opt = 'X'.
+  gs_field_header-just = 'C'.
+*  gs_fieldcat-hotspot = 'X'.
+  APPEND gs_field_header TO gt_field_hedaer.
+
+  pos = pos + 1.
+  CLEAR gs_field_header.
+  gs_field_header-fieldname = 'FI_YEAR'.
+  gs_field_header-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_field_header-ref_field = 'FI_YEAR'.
+  gs_field_header-col_pos = pos.
+  gs_field_header-key = 'X'.
+  gs_field_header-col_opt = 'X'.
+  gs_field_header-just = 'C'.
+  APPEND gs_field_header TO gt_field_hedaer.
+
+  pos = pos + 1.
+  CLEAR gs_field_header.
+  gs_field_header-fieldname = 'FI_STYLE'.
+  gs_field_header-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_field_header-ref_field = 'FI_STYLE'.
+  gs_field_header-col_pos = pos.
+  gs_field_header-col_opt = 'X'.
+  gs_field_header-just = 'C'.
+  APPEND gs_field_header TO gt_field_hedaer.
+
+  pos = pos + 1.
+  CLEAR gs_field_header.
+  gs_field_header-fieldname = 'FI_POST_DATE'.
+  gs_field_header-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_field_header-ref_field = 'FI_POST_DATE'.
+  gs_field_header-col_pos = pos.
+  gs_field_header-col_opt = 'X'.
+  gs_field_header-just = 'C'.
+  APPEND gs_field_header TO gt_field_hedaer.
+
+
+  pos = pos + 1.
+  CLEAR gs_field_header.
+  gs_field_header-fieldname = 'CDATE'.
+  gs_field_header-ref_table = 'ZBBFIT_AOJ_H'.
+  gs_field_header-ref_field = 'CDATE'.
+  gs_field_header-col_pos = pos.
+  gs_field_header-just = 'C'.
+  gs_field_header-col_opt = 'X'.
+  APPEND gs_field_header TO gt_field_hedaer.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form PAYMENT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM payment.
+
+  DATA : ls_roid TYPE lvc_s_roid,
+         lt_roid TYPE lvc_t_roid.
+
+  DATA : ls_zbbfit_aoj_h  LIKE gs_zbbfit_aoj_h,
+         lt_zbbfit_aoj_h  LIKE TABLE OF gs_zbbfit_aoj_h,
+         ls_zbbfit_aoj_i  LIKE gs_zbbfit_aoj_i,
+         lt_zbbfit_aoj_i  LIKE TABLE OF gs_zbbfit_aoj_i,
+         ls_zbbsdt_invo_h TYPE zbbsdt_invo_h,
+         ls_zbbmmt_invo_h TYPE zbbmmt_invo_h,
+         lv_lines         TYPE i,
+         lv_detail        LIKE gs_zbbfit_aoj_h-detail,
+         lv_tmp_line      LIKE gs_zbbfit_aoj_h,
+         lv_payment_nb like gs_zbbfit_aoj_h-fi_no.
+
+  DATA : lv_chk TYPE c.
+
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  IF lines( lt_roid ) = 0.
+    MESSAGE s000 WITH '하나의 전표을 선택하여 주세요.' DISPLAY LIKE 'E'.
+
+  ELSEIF lines( lt_roid ) >= 1.
+
+    CALL FUNCTION 'POPUP_TO_CONFIRM'
+      EXPORTING
+        titlebar              = '반제처리'
+        text_question         = '선택된 행을 반제처리를 하시겠습니까?'
+        icon_button_1         = 'ICON_CHECKED'
+        text_button_1         = '예'
+        icon_button_2         = 'ICON_CANCEL'
+        text_button_2         = '아니오'
+        display_cancel_button = ' '
+      IMPORTING
+        answer                = lv_chk.
+
+    IF lv_chk = 1.
+
+      LOOP AT lt_roid INTO ls_roid.
+
+        CLEAR : gs_zbbfit_aoj_h.
+
+        READ TABLE gt_zbbfit_aoj_h INTO gs_zbbfit_aoj_h INDEX ls_roid-row_id.
+
+        IF gs_zbbfit_aoj_h-state = 'EX'.
+
+          SELECT SINGLE *
+            FROM zbbsdt_invo_h
+            INTO CORRESPONDING FIELDS OF ls_zbbsdt_invo_h
+            WHERE inv_no = gs_zbbfit_aoj_h-inv_no.
+
+          ls_zbbfit_aoj_h-state = 'PEX'.
+          CONCATENATE gs_zbbfit_aoj_h-trans_nm ' 외상매출금 반제처리 완료'
+          INTO lv_detail.
+        ELSE.
+
+          SELECT SINGLE *
+            FROM zbbmmt_invo_h
+            INTO CORRESPONDING FIELDS OF ls_zbbmmt_invo_h
+            WHERE inv_no = gs_zbbfit_aoj_h-inv_no.
+
+          ls_zbbfit_aoj_h-state = 'PIN'.
+          CONCATENATE gs_zbbfit_aoj_h-trans_nm ' 외상매입금 반제처리 완료'
+          INTO lv_detail.
+        ENDIF.
+
+        gs_zbbfit_aoj_h-payment_flag = '1'.
+        gs_zbbfit_aoj_h-dflag = '1'.
+        gs_zbbfit_aoj_h-flag = '0'.
+
+        "기존 전표 반제처리 적용
+        MODIFY gt_zbbfit_aoj_h FROM gs_zbbfit_aoj_h TRANSPORTING flag payment_flag dflag
+        WHERE fi_no = gs_zbbfit_aoj_h-fi_no.
+        UPDATE zbbfit_aoj_h SET payment_flag = gs_zbbfit_aoj_h-payment_flag
+        WHERE fi_no = gs_zbbfit_aoj_h-fi_no.
+
+        SELECT *
+          FROM zbbfit_aoj_h
+          INTO CORRESPONDING FIELDS OF TABLE lt_zbbfit_aoj_h.
+
+*        lv_lines = 1000000000 + lines( lt_zbbfit_aoj_h ).
+**********************************************************************
+        sort lt_zbbfit_aoj_h by fi_no.
+
+*        IF run_flag = 0.
+          READ TABLE lt_zbbfit_aoj_h into lv_tmp_line index lines( lt_zbbfit_aoj_h ).
+          lv_payment_nb = lv_tmp_line-fi_no + 1.
+*          READ TABLE gt_zbbfit_aoj_h INTO lv_tmp_line INDEX lines( gt_zbbfit_aoj_h ).
+
+*          lv_lines = lv_tmp_line-fi_no + 1.
+
+          run_flag = 1.
+*        ELSEIF run_flag = 1.
+*          READ TABLE lt_zbbfit_aoj_h into lv_tmp_line index lines( lt_zbbfit_aoj_h ).
+*          lv_payment_nb = lv_tmp_line-fi_no + 1.
+*        ENDIF.
+
+**********************************************************************
+        "새로운 전표 생성
+        ls_zbbfit_aoj_h-mandt = 100. " client
+        ls_zbbfit_aoj_h-fi_no = lv_payment_nb. "전표번호
+        ls_zbbfit_aoj_h-fi_year = sy-datum(4). "회계연도
+        ls_zbbfit_aoj_h-fi_month = sy-datum+4(2). "전표월
+*        ls_zbbfit_aoj_h-payment_flag = '1'.
+        ls_zbbfit_aoj_h-fi_style = 'PO'. " 전표유형
+*        ls_zbbfit_aoj_h-state = ls_zbbfit_aoj_h-state.
+        ls_zbbfit_aoj_h-deadline = '99991231'. " 입금기한
+        ls_zbbfit_aoj_h-trans_cd = gs_zbbfit_aoj_h-trans_cd. "거래처코드
+        ls_zbbfit_aoj_h-trans_nm = gs_zbbfit_aoj_h-trans_nm. "거래처이름
+        ls_zbbfit_aoj_h-detail = lv_detail. " 적요
+        ls_zbbfit_aoj_h-inv_no = gs_zbbfit_aoj_h-inv_no. " 인보이스번호
+        ls_zbbfit_aoj_h-fi_post_date = sy-datum.
+        ls_zbbfit_aoj_h-cuser = sy-uname. "생성자
+        ls_zbbfit_aoj_h-cdate = sy-datum. "생성일
+        ls_zbbfit_aoj_h-ctime = sy-uzeit. "생성시간
+        ls_zbbfit_aoj_h-payment_fi_no = gs_zbbfit_aoj_h-fi_no.
+
+        INSERT zbbfit_aoj_h FROM ls_zbbfit_aoj_h.
+
+        IF sy-subrc = 0.
+
+          DATA : lv_ln TYPE i VALUE 1.
+
+          CLEAR : ls_zbbfit_aoj_i,
+                  lt_zbbfit_aoj_i.
+
+          IF gs_zbbfit_aoj_h-state = 'EX'. "매출"
+            DO 2 TIMES.
+              ls_zbbfit_aoj_i-mandt = 100. "client
+              ls_zbbfit_aoj_i-fi_no = ls_zbbfit_aoj_h-fi_no.
+              ls_zbbfit_aoj_i-fi_year = sy-datum(4).
+              ls_zbbfit_aoj_i-fi_ln = lv_ln.
+              lv_ln = lv_ln + 1.
+              ls_zbbfit_aoj_i-payment = ls_zbbfit_aoj_h-fi_no. "반제전표
+              ls_zbbfit_aoj_i-state = ls_zbbfit_aoj_h-state.
+              IF sy-index = 1.
+                ls_zbbfit_aoj_i-account_no = '400'.
+                ls_zbbfit_aoj_i-positions = 'CRE'.
+              ELSE.
+                ls_zbbfit_aoj_i-account_no = '300'.
+                ls_zbbfit_aoj_i-positions = 'DBU'.
+              ENDIF.
+              ls_zbbfit_aoj_i-money = ls_zbbsdt_invo_h-total.
+              ls_zbbfit_aoj_i-currency = 'KRW'.
+              ls_zbbfit_aoj_i-fi_post_date = sy-datum.
+              ls_zbbfit_aoj_i-trans_cd = gs_zbbfit_aoj_i-trans_cd.
+              ls_zbbfit_aoj_i-trans_nm = gs_zbbfit_aoj_i-trans_nm.
+              ls_zbbfit_aoj_i-cuser = sy-uname.
+              ls_zbbfit_aoj_i-cdate = sy-datum.
+              ls_zbbfit_aoj_i-ctime = sy-uzeit.
+
+              APPEND ls_zbbfit_aoj_i TO lt_zbbfit_aoj_i.
+            ENDDO.
+            INSERT zbbfit_aoj_i FROM TABLE lt_zbbfit_aoj_i.
+
+          ELSEIF gs_zbbfit_aoj_h-state = 'IN'. "매입"
+            DO 2 TIMES.
+              ls_zbbfit_aoj_i-mandt = 100. "client
+              ls_zbbfit_aoj_i-fi_no = lv_payment_nb.
+              ls_zbbfit_aoj_i-fi_year = sy-datum(4).
+              ls_zbbfit_aoj_i-fi_ln = lv_ln.
+              lv_ln = lv_ln + 1.
+              ls_zbbfit_aoj_i-payment = gs_zbbfit_aoj_h-fi_no. "반제전표
+              ls_zbbfit_aoj_i-state = ls_zbbfit_aoj_h-state.
+              IF sy-index = 1.
+                ls_zbbfit_aoj_i-account_no = '210'.
+                ls_zbbfit_aoj_i-positions = 'CRE'.
+              ELSE.
+                ls_zbbfit_aoj_i-account_no = '400'.
+                ls_zbbfit_aoj_i-positions = 'DBU'.
+              ENDIF.
+              ls_zbbfit_aoj_i-money = ls_zbbmmt_invo_h-total.
+              ls_zbbfit_aoj_i-currency = 'KRW'.
+              ls_zbbfit_aoj_i-fi_post_date = sy-datum.
+              ls_zbbfit_aoj_i-trans_cd = gs_zbbfit_aoj_i-trans_cd.
+              ls_zbbfit_aoj_i-trans_nm = gs_zbbfit_aoj_i-trans_nm.
+              ls_zbbfit_aoj_i-cuser = sy-uname.
+              ls_zbbfit_aoj_i-cdate = sy-datum.
+              ls_zbbfit_aoj_i-ctime = sy-uzeit.
+
+              APPEND ls_zbbfit_aoj_i TO lt_zbbfit_aoj_i.
+
+            ENDDO.
+            INSERT zbbfit_aoj_i FROM TABLE lt_zbbfit_aoj_i.
+          ENDIF.
+          "전표 아이템 생성
+
+          IF sy-subrc = 0.
+*
+*            DO lines( lt_roid ) TIMES.
+*            DELETE gt_zbbfit_aoj_h WHERE payment_flag = '1'.
+*
+*            SORT gt_zbbfit_aoj_h BY fi_no.
+*
+*            CALL METHOD g_grid1->refresh_table_display.
+*
+*            CLEAR : gt_zbbfit_aoj_i.
+*
+*            CALL METHOD g_grid2->refresh_table_display.
+*            ENDDO.
+
+            READ TABLE gt_zbbfit_aoj_h INTO gs_zbbfit_aoj_h INDEX ls_roid-row_id.
+            gs_zbbfit_aoj_H-light = '3'.
+            MODIFY gt_zbbfit_aoj_h FROM gs_zbbfit_aoj_h TRANSPORTING light WHERE fi_no = gs_zbbfit_aoj_h-fi_no.
+
+            SELECT *
+              FROM zbbfit_aoj_h
+              INTO CORRESPONDING FIELDS OF TABLE @gt_splitter_top
+              WHERE fi_no = @ls_zbbfit_aoj_h-fi_no.
+
+            SELECT *
+              FROM @lt_zbbfit_aoj_i AS a
+              INTO CORRESPONDING FIELDS OF TABLE @gt_splitter_bottom.
+*
+            MESSAGE s000 WITH  '전표번호 ' && ls_zbbfit_aoj_i-fi_no && ' 반제전표 생성이 완료되었습니다.'.
+          ELSE.
+            MESSAGE e000 WITH '반제전표 생성에 오류가 발생하였습니다.'.
+          ENDIF.
+
+        ELSE.
+          MESSAGE e000 WITH '반제전표헤더 생성이 실패하였습니다.'.
+        ENDIF.
+      ENDLOOP.
+
+*      IF sy-subrc = 0.
+*
+*        DELETE gt_zbbfit_aoj_h WHERE dflag = '1'.
+*
+*        SORT gt_zbbfit_aoj_h BY fi_no.
+*
+*        CALL METHOD go_alv_grid->refresh_table_display.
+*
+*        CLEAR : gt_zbbfit_aoj_i.
+*
+*        CALL METHOD go_alv_grid->refresh_table_display.
+*
+*      ENDIF.
+
+
+    ENDIF.
+  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SET_HANDER
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_handler.
+  SET HANDLER:
+  lcl_handler=>on_doubleclick FOR go_alv_grid.
+*  lcl_handler=>on_toolbar_0100 FOR go_alv_grid,
+*  lcl_handler=>on_user_command FOR go_alv_grid.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_sort
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_sort.
+  gs_sort-spos = '1'.
+  gs_sort-fieldname = 'FI_NO'.
+  gs_sort-up = 'X'.
+  APPEND gs_sort TO gt_sort.
+
+  gs_sort-spos = '2'.
+  gs_sort-fieldname = 'POSITIONS'.
+  gs_sort-up = 'X'.
+  gs_sort-subtot = 'X'.
+  APPEND gs_sort TO gt_sort.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form RANGES_PA_EX
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM ranges_pa_ex.
+  DATA : lv_lines TYPE i VALUE 0.
+
+  REFRESH : gt_zbbfit_aoj_h.
+
+  IF pa_fino IS NOT INITIAL.
+    SELECT *
+     FROM zbbfit_aoj_h
+     INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+     WHERE trans_cd IN ra_cl_cd
+     AND state = 'EX'
+     AND payment_flag = '0'
+     AND fi_no = pa_fino
+     AND fi_year IN so_day.
+  ELSE.
+    SELECT *
+    FROM zbbfit_aoj_h
+    INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+    WHERE trans_cd IN ra_cl_cd
+    AND state = 'EX'
+    AND payment_flag = '0'
+      AND fi_year IN so_day.
+  ENDIF.
+
+*  SELECT *
+*    FROM zbbfit_aoj_h
+*    INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+*    WHERE trans_cd IN ra_cl_cd
+*    AND state = 'EX'
+*    AND payment_flag = '0'.
+
+  lv_lines = lines( gt_zbbfit_aoj_h ).
+
+  SORT gt_zbbfit_aoj_h BY fi_no ASCENDING.
+
+  IF sy-subrc = 4.
+    MESSAGE s000 WITH '데이터가 존재하지 않습니다.' DISPLAY LIKE 'E'.
+  ELSEIF sy-subrc = 0.
+*    IF gv_msg_flag = '0'.
+    MESSAGE s000 WITH lv_lines && '개 데이터가 성공적으로 조회되었습니다.'.
+*    ENDIF.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s000 WITH '조회 중 오류가 발생하였습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_cl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_cl .
+  DATA : lv_lines TYPE i VALUE 0.
+
+  REFRESH : gt_zbbfit_aoj_h.
+
+  IF pa_fino IS NOT INITIAL.
+    SELECT *
+      FROM zbbfit_aoj_h
+      INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+      WHERE trans_cd = pa_cl
+      AND payment_flag = '0'
+      AND fi_no = pa_fino
+      AND fi_year IN so_day.
+  ELSE.
+    SELECT *
+      FROM zbbfit_aoj_h
+      INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+      WHERE trans_cd = pa_cl
+      AND payment_flag = '0'
+      AND fi_year IN so_day.
+  ENDIF.
+
+
+
+  lv_lines = lines( gt_zbbfit_aoj_h ).
+
+  SORT gt_zbbfit_aoj_h BY fi_no ASCENDING.
+
+  IF sy-subrc = 4.
+    MESSAGE s000 WITH '데이터가 존재하지 않습니다.' DISPLAY LIKE 'E'.
+  ELSEIF sy-subrc = 0.
+*    IF gv_msg_flag = '0'.
+    MESSAGE s000 WITH lv_lines && '개 데이터가 성공적으로 조회되었습니다.'.
+*    ENDIF.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s000 WITH '조회 중 오류가 발생하였습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form ranges_pa_in
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM ranges_pa_in .
+  DATA : lv_lines TYPE i VALUE 0.
+
+  REFRESH : gt_zbbfit_aoj_h.
+
+  IF pa_fino IS NOT INITIAL.
+    SELECT *
+      FROM zbbfit_aoj_h
+      INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+      WHERE trans_cd IN ra_sp_cd
+      AND state = 'IN'
+      AND payment_flag = '0'
+      AND fi_no = pa_fino
+      AND fi_year IN so_day.
+  ELSE.
+    SELECT *
+      FROM zbbfit_aoj_h
+      INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+      WHERE trans_cd IN ra_sp_cd
+      AND state = 'IN'
+      AND payment_flag = '0'
+      AND fi_year IN so_day.
+  ENDIF.
+
+
+  lv_lines = lines( gt_zbbfit_aoj_h ).
+
+  SORT gt_zbbfit_aoj_h BY fi_no ASCENDING.
+
+  IF sy-subrc = 4.
+    MESSAGE s000 WITH '데이터가 존재하지 않습니다.' DISPLAY LIKE 'E'.
+  ELSEIF sy-subrc = 0.
+*    IF gv_msg_flag = '0'.
+    MESSAGE s000 WITH lv_lines && '개 데이터가 성공적으로 조회되었습니다.'.
+*    ENDIF.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s000 WITH '조회 중 오류가 발생하였습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_sp
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_sp.
+  DATA : lv_lines TYPE i VALUE 0.
+  REFRESH : gt_zbbfit_aoj_h.
+
+  IF pa_fino IS NOT INITIAL.
+    SELECT *
+      FROM zbbfit_aoj_h
+      INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+      WHERE trans_cd = pa_sp
+      AND payment_flag = '0'
+      AND fi_no = pa_fino
+      AND fi_year IN so_day.
+  ELSE.
+    SELECT *
+     FROM zbbfit_aoj_h
+     INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_h
+     WHERE trans_cd = pa_sp
+     AND payment_flag = '0'
+     AND fi_year IN so_day.
+  ENDIF.
+
+
+  lv_lines = lines( gt_zbbfit_aoj_h ).
+
+  SORT gt_zbbfit_aoj_h BY fi_no ASCENDING.
+
+  IF sy-subrc = 4.
+    MESSAGE s000 WITH '데이터가 존재하지 않습니다.' DISPLAY LIKE 'E'.
+  ELSEIF sy-subrc = 0.
+*    IF gv_msg_flag = '0'.
+    MESSAGE s000 WITH lv_lines && '개 데이터가 성공적으로 조회되었습니다.'.
+*    ENDIF.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s000 WITH '조회 중 오류가 발생하였습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sel_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM sel_item .
+
+  "1. gt_zbbfit_aoj_i에 zbbfit_aoj_i를 select
+  REFRESH : gt_zbbfit_aoj_i.
+
+  SELECT *
+    FROM zbbfit_aoj_i
+    INTO CORRESPONDING FIELDS OF TABLE gt_zbbfit_aoj_i
+    WHERE fi_no = fi_no
+    AND fi_year = fi_year.
+
+  IF sy-subrc <> 0.
+
+*    MESSAGE '데이터가 존재하지 않습니다.' TYPE 'S' DISPLAY LIKE 'E'.
+*    zbbfit_aoj_h-fi_no = fi_no.
+*    zbbfit_aoj_h-fi_year = fi_year.
+*    zbbfit_aoj_h-flag = '2'.
+*
+*    SET PARAMETER ID 'FLG' FIELD zbbfit_aoj_h-flag.
+
+  ELSE.
+
+*    zbbfit_aoj_h-fi_no = gs_zbbfit_aoj_i-fi_NO.
+*    zbbfit_aoj_h-fi_year = gs_zbbfit_aoj_i-fi_year.
+*    zbbfit_aoj_h-fi_style = gs_zbbfit_aoj_i-fi_style.
+*    zbbfit_aoj_h-fi_post_date = gs_zbbfit_aoj_i-fi_post_date.
+*    zbbfit_aoj_h-cDATE = gs_zbbfit_aoj_i-cDATE.
+
+
+*    PERFORM color_deadline.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form chabun_daebun_sum
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM chabun_daebun_sum .
+
+  CLEAR : gs_zbbfit_aoj_i.
+
+  LOOP AT gt_zbbfit_aoj_i INTO gs_zbbfit_aoj_i.
+
+    IF gs_zbbfit_aoj_i-positions = 'CRE'.
+
+      gs_zbbfit_aoj_i-money = gs_zbbfit_aoj_i-money * ( -1 ).
+
+      MODIFY gt_zbbfit_aoj_i FROM gs_zbbfit_aoj_i TRANSPORTING money.
+
+      CLEAR : gs_zbbfit_aoj_i.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form color_deadline
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM color_deadline .
+
+  DATA : lv_date TYPE sy-datum, " 신호등 설정을 위한 지역변수
+         lv_mark TYPE sy-datum.
+
+  lv_date = sy-datum + 7. " 현재 + 7 일
+  lv_mark = 00000000.
+
+  LOOP AT gt_zbbfit_aoj_i INTO gs_zbbfit_aoj_i.
+
+    IF  gs_zbbfit_aoj_i-deadline <> lv_mark
+      AND gs_zbbfit_aoj_i-deadline < sy-datum
+      AND gs_zbbfit_aoj_i-clear_dt IS INITIAL.
+      gs_zbbfit_aoj_i-color = 'C' && col_negative && '10'.
+    ELSEIF gs_zbbfit_aoj_i-deadline <> lv_mark
+      AND sy-datum < gs_zbbfit_aoj_i-deadline AND gs_zbbfit_aoj_i-deadline < lv_date
+      AND gs_zbbfit_aoj_i-clear_dt IS INITIAL.
+      gs_zbbfit_aoj_i-color = 'C' && col_total && '10'.
+    ELSEIF gs_zbbfit_aoj_i-deadline <> lv_mark
+      AND lv_date < gs_zbbfit_aoj_i-deadline AND gs_zbbfit_aoj_i-clear_dt IS INITIAL.
+      gs_zbbfit_aoj_i-color = 'C' && col_positive && '10'.
+    ELSEIF gs_zbbfit_aoj_i-deadline <> lv_mark
+      AND gs_zbbfit_aoj_i-clear_dt IS NOT INITIAL.
+      gs_zbbfit_aoj_i-color = 'C' && col_heading && '10'.
+    ENDIF.
+
+    MODIFY gt_zbbfit_aoj_i FROM gs_zbbfit_aoj_i TRANSPORTING color.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object_splitter
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object_splitter.
+
+  CREATE OBJECT g_custom_container2
+    EXPORTING
+      container_name = 'CUSTOM_CONTAINER2'.
+
+  CREATE OBJECT g_splitter_container
+    EXPORTING
+      parent  = g_custom_container2
+      rows    = 2
+      columns = 1.
+
+  CALL METHOD g_splitter_container->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = g_splitter_top.
+
+  CALL METHOD g_splitter_container->get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = g_splitter_bottom.
+
+  CREATE OBJECT go_top_alv_grid
+    EXPORTING
+      i_parent = g_splitter_top.
+
+  CREATE OBJECT go_bottom_alv_grid
+    EXPORTING
+      i_parent = g_splitter_bottom.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_top_fieldcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_top_fieldcat .
+
+  DATA : pos TYPE i VALUE 1.
+
+  REFRESH gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  gs_top_fieldcat-fieldname = 'FI_NO'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-coltext = '전표번호'.
+  gs_top_fieldcat-outputlen = 12.
+  gs_top_fieldcat-key = 'X'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  pos = pos + 1.
+  gs_top_fieldcat-fieldname = 'FI_STYLE'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-outputlen = 5.
+  gs_top_fieldcat-coltext = '전표유형'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  pos = pos + 1.
+  gs_top_fieldcat-fieldname = 'FI_STYLE_TEXT'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-outputlen = 12.
+  gs_top_fieldcat-coltext = '전표유형이름'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  pos = pos + 1.
+  gs_top_fieldcat-fieldname = 'STATE'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-outputlen = 4.
+  gs_top_fieldcat-coltext = '구분'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  pos = pos + 1.
+  gs_top_fieldcat-fieldname = 'STATE_TEXT'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-outputlen = 10.
+  gs_top_fieldcat-coltext = '구분이름'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  pos = pos + 1.
+  gs_top_fieldcat-fieldname = 'INV_NO'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-outputlen = 12.
+  gs_top_fieldcat-coltext = '인보이스번호'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  pos = pos + 1.
+  gs_top_fieldcat-fieldname = 'TRANS_NM'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-outputlen = 10.
+  gs_top_fieldcat-coltext = '거래처이름'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+  CLEAR gs_top_fieldcat.
+  pos = pos + 1.
+  gs_top_fieldcat-fieldname = 'FI_POST_DATE'.
+  gs_top_fieldcat-col_pos = pos.
+  gs_top_fieldcat-just = 'C'.
+  gs_top_fieldcat-outputlen = 10.
+  gs_top_fieldcat-coltext = '전기일'.
+  APPEND gs_top_fieldcat TO gt_top_fieldcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_light
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_light .
+  CLEAR : gs_zbbfit_aoj_h.
+
+  LOOP AT gt_zbbfit_aoj_h INTO gs_zbbfit_aoj_h.
+    IF gs_zbbfit_aoj_h-payment_flag EQ '0'.
+      gs_zbbfit_aoj_h-light = '1'.
+      MODIFY gt_zbbfit_aoj_h FROM gs_zbbfit_aoj_h TRANSPORTING light.
+    ENDIF.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_bottom_fieldcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_bottom_fieldcat .
+
+  DATA : pos TYPE i VALUE 1.
+
+  REFRESH gt_bottom_fieldcat.
+
+  CLEAR gs_bottom_fieldcat.
+  gs_bottom_fieldcat-fieldname = 'FI_NO'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'C'.
+  gs_bottom_fieldcat-coltext = '전표번호'.
+  gs_bottom_fieldcat-outputlen = 12.
+  gs_bottom_fieldcat-key = 'X'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+  CLEAR gs_bottom_fieldcat.
+  pos = pos + 1.
+  gs_bottom_fieldcat-fieldname = 'FI_LN'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'C'.
+  gs_bottom_fieldcat-outputlen = 6.
+  gs_bottom_fieldcat-coltext = '전표라인'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+  CLEAR gs_bottom_fieldcat.
+  pos = pos + 1.
+  gs_bottom_fieldcat-fieldname = 'POSITIONS'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'C'.
+  gs_bottom_fieldcat-outputlen = 7.
+  gs_bottom_fieldcat-coltext = '차변/대변'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+  CLEAR gs_bottom_fieldcat.
+  pos = pos + 1.
+  gs_bottom_fieldcat-fieldname = 'BUN_NAME'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'C'.
+  gs_bottom_fieldcat-outputlen = 7.
+  gs_bottom_fieldcat-coltext = '구분'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+
+  CLEAR gs_bottom_fieldcat.
+  pos = pos + 1.
+  gs_bottom_fieldcat-fieldname = 'ACCOUNT_NO'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'C'.
+  gs_bottom_fieldcat-outputlen = 5.
+  gs_bottom_fieldcat-coltext = '계정번호'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+  CLEAR gs_bottom_fieldcat.
+  pos = pos + 1.
+  gs_bottom_fieldcat-fieldname = 'ACCOUNT_NAME'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'C'.
+  gs_bottom_fieldcat-outputlen = 7.
+  gs_bottom_fieldcat-coltext = '계정이름'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+  CLEAR gs_bottom_fieldcat.
+  pos = pos + 1.
+  gs_bottom_fieldcat-fieldname = 'MONEY'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'R'.
+  gs_bottom_fieldcat-outputlen = 10.
+  gs_bottom_fieldcat-coltext = '가격'.
+  gs_bottom_fieldcat-cfieldname = 'CURRENCY'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+  CLEAR gs_bottom_fieldcat.
+  pos = pos + 1.
+  gs_bottom_fieldcat-fieldname = 'CURRENCY'.
+  gs_bottom_fieldcat-col_pos = pos.
+  gs_bottom_fieldcat-just = 'C'.
+  gs_bottom_fieldcat-outputlen = 5.
+  gs_bottom_fieldcat-coltext = '화폐단위'.
+  APPEND gs_bottom_fieldcat TO gt_bottom_fieldcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_function_key
+*&---------------------------------------------------------------------*
+*& text : REPORT의 FUNCTION KEY SETTING
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_function_key .
+*  CONCATENATE icon_display_text '조회' INTO sscrfields-functxt_01.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form new_gui_zbbfi_3010
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM new_gui_zbbfi_3010 .
+
+  CALL FUNCTION 'TH_CREATE_MODE'
+    EXPORTING
+      transaktion  = 'ZBBFI3010'
+      process_dark = 'X'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fieldcat_src200
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_fieldcat_src200 .
+
+  DATA : pos TYPE i VALUE 1.
+
+  REFRESH gt_scr200_fieldcat.
+
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'FI_NO'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'FI_NO'.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'FI_LN'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'FI_LN'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'POSITIONS'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'POSITIONS'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'ACCOUNT_NO'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'ACCOUNT_NO'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'MONEY'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'MONEY'.
+  gs_scr200_fieldcat-cfieldname = 'CURRENCY'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-do_sum = 'X'.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'R'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+  pos = pos + 1.
+  CLEAR gs_scr200_fieldcat.
+  gs_scr200_fieldcat-fieldname = 'CURRENCY'.
+  gs_scr200_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_scr200_fieldcat-ref_field = 'CURRENCY'.
+  gs_scr200_fieldcat-col_pos = pos.
+  gs_scr200_fieldcat-col_opt = 'X'.
+  gs_scr200_fieldcat-just = 'C'.
+  APPEND gs_scr200_fieldcat TO gt_scr200_fieldcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sel_src200_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM sel_src200_item .
+
+  SELECT *
+    FROM zbbfit_aoj_i
+    INTO CORRESPONDING FIELDS OF TABLE gt_scr200_item
+    WHERE fi_no = zbbfit_aoj_h-fi_no.
+
+  "차변 + 대변 합 = 0
+  CLEAR : gs_scr200_item.
+
+  LOOP AT gt_scr200_item INTO gs_scr200_item.
+
+    IF gs_scr200_item-positions = 'CRE'.
+
+      gs_scr200_item-money = gs_scr200_item-money * ( -1 ).
+
+      MODIFY gt_scr200_item FROM gs_scr200_item TRANSPORTING money.
+
+      CLEAR : gs_scr200_item.
+    ENDIF.
+
+  ENDLOOP.
+
+  " 입금기한 color 설정
+  DATA : lv_date TYPE sy-datum, " 신호등 설정을 위한 지역변수
+         lv_mark TYPE sy-datum.
+
+  lv_date = sy-datum + 7. " 현재 + 7 일
+  lv_mark = 00000000.
+
+  LOOP AT gt_scr200_item INTO gs_scr200_item.
+
+    IF  gs_scr200_item-deadline <> lv_mark
+      AND gs_scr200_item-deadline < sy-datum
+      AND gs_scr200_item-clear_dt IS INITIAL.
+      gs_scr200_item-color = 'C' && col_negative && '10'.
+    ELSEIF gs_scr200_item-deadline <> lv_mark
+      AND sy-datum <= gs_scr200_item-deadline AND gs_scr200_item-deadline <= lv_date
+      AND gs_scr200_item-clear_dt IS INITIAL.
+      gs_scr200_item-color = 'C' && col_total && '10'.
+    ELSEIF gs_scr200_item-deadline <> lv_mark
+      AND lv_date < gs_scr200_item-deadline AND gs_scr200_item-clear_dt IS INITIAL.
+      gs_scr200_item-color = 'C' && col_positive && '10'.
+    ELSE.
+      gs_scr200_item-color = 'C' && col_key && '10'.
+    ENDIF.
+
+    MODIFY gt_scr200_item FROM gs_scr200_item TRANSPORTING color.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_scr200
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_scr200 .
+  gs_layout_scr200-info_fname = 'COLOR'.
+  gs_layout_scr200-grid_title = '전표상세내역'.
+  gs_layout_scr200-smalltitle = 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form delete_splitter_top_and_bottom
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM delete_splitter_top_and_bottom .
+  CLEAR : gs_splitter_top.
+
+  LOOP AT gt_splitter_top INTO gs_splitter_top.
+    DELETE gt_splitter_top INDEX sy-tabix.
+  ENDLOOP.
+
+  CLEAR : gs_splitter_bottom.
+
+  LOOP AT gT_splitter_bottom INTO gs_splitter_bottom.
+    DELETE gT_splitter_bottom INDEX sy-tabix.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form GET_DOMAIN_TEXT_HEAD_AND_ITEM
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_domain_text_head_and_item .
+
+  LOOP AT gt_splitter_top INTO gs_splitter_top.
+
+    IF gs_splitter_top-fi_style IS NOT INITIAL.
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname    = 'ZBBD_FI_STYLE'
+          iv_value      = gs_splitter_top-fi_style
+        IMPORTING
+          ev_value_text = gs_splitter_top-fi_style_text.
+    ENDIF.
+
+    IF gs_splitter_top-state IS NOT INITIAL.
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname    = 'ZBBD_STATE'
+          iv_value      = gs_splitter_top-state
+        IMPORTING
+          ev_value_text = gs_splitter_top-state_text.
+    ENDIF.
+
+    MODIFY gt_splitter_top FROM gs_splitter_top INDEX sy-tabix TRANSPORTING fi_style_text state_text.
+  ENDLOOP.
+
+  LOOP AT gt_splitter_bottom INTO gs_splitter_bottom.
+
+    IF gs_splitter_bottom-positions IS NOT INITIAL.
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname    = 'ZBBD_POSITION'
+          iv_value      = gs_splitter_bottom-positions
+        IMPORTING
+          ev_value_text = gs_splitter_bottom-bun_name.
+    ENDIF.
+
+    IF gs_splitter_bottom-account_no IS NOT INITIAL.
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname    = 'ZBBD_ACCOUNT_NO'
+          iv_value      = gs_splitter_bottom-account_no
+        IMPORTING
+          ev_value_text = gs_splitter_bottom-account_name.
+    ENDIF.
+
+    MODIFY gt_splitter_bottom FROM gs_splitter_bottom INDEX sy-tabix TRANSPORTING bun_name account_name.
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_splitter
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_splitter .
+
+  gs_top_layout-grid_title = '반제전표정보'.
+  gs_top_layout-smalltitle = 'X'.
+
+  gs_bottom_layout-grid_title = '반제정보 상세내역'.
+  gs_bottom_layout-smalltitle = 'X'.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

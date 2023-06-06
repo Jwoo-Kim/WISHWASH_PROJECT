@@ -1,0 +1,146 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2020_TOP
+*&---------------------------------------------------------------------*
+
+TYPE-POOLS: vrm, col.
+
+TABLES : zbbfit_aoj_h
+        , zbbfit_aoj_i
+        , zbbsdt_client " 고객사
+        , zbbmmt_lfa1 " 공급업체
+        , sscrfields,
+        icon.
+
+CONSTANTS : gc_mark VALUE 'X'.
+
+* 고객사, 공급업체 workArea, itab
+DATA : gs_zbbsdt_client TYPE zbbsdt_client,
+       gt_zbbsdt_client LIKE TABLE OF gs_zbbsdt_client,
+       gs_zbbmmt_lfa1   TYPE zbbmmt_lfa1,
+       gt_zbbmmt_lfa1   LIKE TABLE OF zbbmmt_lfa1.
+
+DATA gt_exclude TYPE TABLE OF rsexfcode WITH HEADER LINE. "버튼 EXCLUDE
+
+DATA: cl_name  TYPE vrm_id,
+      cl_list  TYPE vrm_values,
+      cl_value LIKE LINE OF cl_list,
+      sp_name  TYPE vrm_id,
+      sp_list  TYPE vrm_values,
+      sp_value LIKE LINE OF sp_list.
+
+DATA : icon_name       TYPE iconname,
+       button_text(20) TYPE c,
+       quickinfo       LIKE smp_dyntxt-quickinfo,
+       icon_str(255)   TYPE c.
+
+data : run_flag type i VALUE 0.
+
+
+*DATA : flag TYPE zbbfit_aoj_h-flag. " input값 클리어를 위한 변수
+
+DATA : ok_code LIKE sy-ucomm.
+DATA : fi_no        TYPE zbbfit_aoj_h-fi_no, " 전표번호
+       fi_year      TYPE zbbfit_aoj_h-fi_year, " 회계연도
+       fi_style     TYPE zbbfit_aoj_h-fi_style, " 전표유형
+       fi_post_date TYPE zbbfit_aoj_h-fi_post_date, " 전기일
+       fi_cdate     TYPE zbbfit_aoj_h-cDATE. " 생성일
+
+
+DATA : BEGIN OF gs_zbbfit_aoj_i. " gs_zbbfit_aoj_i형태의 Workarea
+         INCLUDE TYPE zbbfit_aoj_i.
+DATA :   color        TYPE c LENGTH 4,
+         bun_name     TYPE dd07t-ddtext, " 차변/대변 텍스트
+         account_name TYPE dd07t-ddtext, " 계정번호 텍스트
+       END OF gs_zbbfit_aoj_i,
+       gt_zbbfit_aoj_i LIKE TABLE OF gs_zbbfit_aoj_i. " gs_zbbfit_aoj_i형태의 itab
+
+DATA : BEGIN OF gs_zbbfit_aoj_h.
+         INCLUDE TYPE zbbfit_aoj_h.
+DATA :   light(1) TYPE c,
+       END OF gs_zbbfit_aoj_h,
+       gt_zbbfit_aoj_h LIKE TABLE OF gs_zbbfit_aoj_h.
+
+*DATA : gs_zbbfit_aoj_h TYPE zbbfit_aoj_h,
+*       gt_zbbfit_aoj_h LIKE TABLE OF gs_zbbfit_aoj_h.
+
+DATA : go_container TYPE REF TO cl_gui_custom_container. " Custom Contatiner
+DATA : go_alv_grid TYPE REF TO cl_gui_alv_grid. " ALV Grid
+DATA : gs_layout TYPE lvc_s_layo. " Layout
+DATA : gs_layout_scr200 TYPE lvc_s_layo.
+DATA : gs_field_catalog   TYPE lvc_s_fcat, " Fieldcat
+       gt_field_catalog   TYPE lvc_t_fcat,
+       gs_top_fieldcat    TYPE lvc_s_fcat, " top의 fieldcat workarea
+       gt_top_fieldcat    TYPE lvc_t_fcat, " top의 fieldcat itab
+       gs_bottom_fieldcat TYPE lvc_s_fcat, " bottom의 fieldcat workarea
+       gt_bottom_fieldcat TYPE lvc_t_fcat. " bottom의 fieldcat itab.
+
+DATA : gs_field_header TYPE lvc_s_fcat, " Fieldcat
+       gt_field_hedaer TYPE lvc_t_fcat.
+
+DATA : gs_sort TYPE lvc_s_sort, " Sort
+       gt_sort TYPE lvc_t_sort.
+
+DATA : gs_fieldcat TYPE lvc_s_fcat,
+       gt_fieldcat TYPE lvc_t_fcat.
+
+DATA :
+  gv_cursor       TYPE brf_cursor_field. " CURSOR
+
+DATA : g_splitter_container TYPE REF TO cl_gui_splitter_container,
+       g_custom_container2  TYPE REF TO cl_gui_custom_container,
+       g_splitter_top       TYPE REF TO cl_gui_container,
+       g_splitter_bottom    TYPE REF TO cl_gui_container,
+       go_top_alv_grid      TYPE REF TO cl_gui_alv_grid,
+       go_bottom_alv_grid   TYPE REF TO cl_gui_alv_grid,
+       go_scr200_container  TYPE REF TO cl_gui_custom_container,
+       go_scr200_alv_grid   TYPE REF TO cl_gui_alv_grid.
+
+RANGES : ra_cl_cd FOR zbbsdt_client-cl_cd, " 고객사 코드
+         ra_sp_cd FOR zbbmmt_lfa1-sp_cd. " 공급사 코드
+
+DATA : gs_layout_grid1 TYPE lvc_s_layo.
+
+*DATA : gs_splitter_top    TYPE zbbfit_aoj_h,
+*       gt_splitter_top    TYPE TABLE OF ZBBFIt_AOJ_H,
+*       gs_splitter_bottom TYPE zbbfit_aoj_i,
+*       gt_splitter_bottom TYPE TABLE OF zbbfit_aoj_i.
+DATA : gs_scr200_fieldcat TYPE lvc_s_fcat,
+       gt_scr200_fieldcat TYPE lvc_t_fcat.
+
+DATA : BEGIN OF gs_splitter_top.
+         INCLUDE TYPE zbbfit_aoj_h.
+DATA :   color         TYPE c LENGTH 4, " 신호등 변수
+         fi_style_text TYPE dd07t-ddtext, " 전표유형 텍스트
+         state_text    TYPE dd07t-ddtext, " 구분 텍스트
+       END OF gs_splitter_top,
+       gt_splitter_top LIKE TABLE OF gs_splitter_top.
+
+DATA : BEGIN OF gs_splitter_bottom.
+         INCLUDE TYPE zbbfit_aoj_i.
+DATA :   color        TYPE c LENGTH 4, " 신호등 변수
+         bun_name     TYPE dd07t-ddtext, " 차변/대변 텍스트
+         account_name TYPE dd07t-ddtext, " 계정번호 텍스트
+       END OF gs_splitter_bottom,
+       gt_splitter_bottom LIKE TABLE OF gs_splitter_bottom.
+
+
+DATA : gv_flag TYPE c. "반제처리에서 전표조회로 갔는지 확인하는 FLAG
+DATA : gv_flag2 TYPE c.  "전표조회에서 다시 반제처리로 왔는지 확인하는 FLAG
+DATA : gv_start TYPE c VALUE '0'. "반제처리가 처음 시작하는지 아닌지 판단하는 FLAG.
+DATA : gubun  TYPE dd07t-ddtext,
+       yuhung TYPE dd07t-ddtext.
+
+DATA : BEGIN OF gs_scr200_item.
+         INCLUDE TYPE zbbfit_aoj_i.
+DATA :   color TYPE c LENGTH 4, " 신호등 변수
+       END OF gs_scr200_item,
+       gt_scr200_item LIKE TABLE OF gs_scr200_item.
+
+*DATA : gs_src200_item TYPE zbbfit_aoj_i,
+*       gt_src200_item TYPE TABLE OF zbbfit_aoj_i.
+
+DATA : gs_top_layout    TYPE lvc_s_layo,
+       gs_bottom_layout TYPE lvc_s_layo.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

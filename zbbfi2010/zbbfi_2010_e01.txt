@@ -1,0 +1,30 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI_2010_E01
+*&---------------------------------------------------------------------*
+
+INITIALIZATION.
+  sy-title = '[WISHWASH_FI] 전표조회(다수건)'.
+  GET PARAMETER ID 'MTL' FIELD gv_move_to_list.
+
+  IF gv_move_to_list = '1'.
+    DATA : year(4)  TYPE c,
+           month(2) TYPE c,
+           day(2)   TYPE c.
+
+    year = sy-datum+0(4).
+    month = sy-datum+4(2).
+    day = '01'.
+
+    pa_post-low = year && month && day.
+    pa_post-high = sy-datum.
+    APPEND pa_post.
+
+    gv_move_to_list = '0'.
+    SET PARAMETER ID 'MTL' FIELD gv_move_to_list.
+  ENDIF.
+
+START-OF-SELECTION.
+  PERFORM check_data_exist.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

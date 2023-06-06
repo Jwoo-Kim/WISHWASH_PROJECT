@@ -1,0 +1,199 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2020_O01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Module STATUS_0100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'STATUS_0100'.
+  SET TITLEBAR 'TITLE_0100'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CLEAR_OK_CODE OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE clear_ok_code OUTPUT.
+  CLEAR : ok_code.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_CURSOR OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_cursor OUTPUT.
+  SET CURSOR FIELD gv_cursor.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CREATE_ALV_0100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE create_alv_0100 OUTPUT.
+
+  IF go_container IS INITIAL.
+    PERFORM create_obj.
+    PERFORM set_layout.
+*    PERFORM set_sort.
+    PERFORM set_fieldcat_header.
+*    PERFORM set_field_catalog.
+    PERFORM set_handler.
+    PERFORM set_light.
+
+    SORT gt_zbbfit_aoj_h BY fi_no ASCENDING.
+
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_zbbfit_aoj_h
+        it_fieldcatalog = gt_field_hedaer.
+
+  ELSE.
+    PERFORM set_light.
+    CALL METHOD go_alv_grid->refresh_table_display.
+
+  ENDIF.
+
+  IF g_custom_container2 IS INITIAL.
+
+    PERFORM set_layout_splitter.
+    PERFORM set_top_fieldcat.
+    PERFORM set_bottom_fieldcat.
+    PERFORM create_object_splitter.
+
+    CALL METHOD go_top_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_top_layout
+      CHANGING
+        it_outtab       = gt_splitter_top
+        it_fieldcatalog = gt_top_fieldcat.
+
+    CALL METHOD go_bottom_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_bottom_layout
+      CHANGING
+        it_outtab       = gT_splitter_bottom
+        it_fieldcatalog = gt_bottom_fieldcat.
+
+  ELSE.
+    PERFORM get_domain_text_head_and_item.
+
+    CALL METHOD go_top_alv_grid->refresh_table_display.
+    CALL METHOD go_bottom_alv_grid->refresh_table_display.
+
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module STATUS_0200 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0200 OUTPUT.
+  SET PF-STATUS 'STATUS_200'.
+  SET TITLEBAR 'TITLEBAR_200'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module DISPLAY_ALV OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE display_alv OUTPUT.
+
+  PERFORM get_domain_value_text_scr200.
+  PERFORM set_fieldcat_src200.
+  PERFORM sort_src200_setting.
+  PERFORM set_layout_scr200.
+  PERFORM sel_src200_item.
+
+  IF go_scr200_container IS INITIAL.
+
+    CREATE OBJECT go_scr200_container
+      EXPORTING
+        container_name = 'CUSTOM_ITEM'.
+
+    CREATE OBJECT go_scr200_alv_grid
+      EXPORTING
+        i_parent = go_scr200_container.
+
+    CALL METHOD go_scr200_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_layout_scr200
+      CHANGING
+        it_sort         = gt_sort
+        it_outtab       = gt_scr200_item
+        it_fieldcatalog = gt_scr200_fieldcat.
+
+  ELSE.
+    CALL METHOD go_scr200_alv_grid->refresh_table_display.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form get_domain_value_text_scr200
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_domain_value_text_scr200 .
+
+  CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+    EXPORTING
+      iv_domname    = 'ZBBD_STATE'
+      iv_value      = zbbfit_aoj_h-state
+    IMPORTING
+      ev_value_text = gubun.
+
+  CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+    EXPORTING
+      iv_domname    = 'ZBBD_FI_STYLE'
+      iv_value      = zbbfit_aoj_h-fi_style
+    IMPORTING
+      ev_value_text = yuhung.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sort_src200_setting
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM sort_src200_setting .
+  gs_sort-spos = '1'.
+  gs_sort-fieldname = 'FI_NO'.
+  gs_sort-up = 'X'.
+  APPEND gs_sort TO gt_sort.
+
+  gs_sort-spos = '2'.
+  gs_sort-fieldname = 'POSITIONS'.
+  gs_sort-up = 'X'.
+  gs_sort-subtot = 'X'.
+  APPEND gs_sort TO gt_sort.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Module STATUS_0110 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0110 OUTPUT.
+  SET PF-STATUS 'STAT'.
+* SET TITLEBAR 'xxx'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CLEAR_PA_CL_AND_PA_SP OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE clear_pa_cl_and_pa_sp OUTPUT.
+CLEAR : PA_CL,
+        PA_SP.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

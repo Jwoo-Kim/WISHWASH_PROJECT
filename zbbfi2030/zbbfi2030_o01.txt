@@ -1,0 +1,328 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2030_O01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Module STATUS_0100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'STATUS_100'.
+  SET TITLEBAR 'TITLEBAR_100'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_CURSOR OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_cursor OUTPUT.
+
+  IF gv_cursor_flag = '0'.
+
+    SET CURSOR FIELD gv_cursor.
+
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CREATE_ALV_SCREEN_100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE create_alv_screen_100 OUTPUT.
+
+  IF go_container IS INITIAL.
+
+    CREATE OBJECT go_container
+      EXPORTING
+        container_name = 'CUSTOM_CONTAINER'.
+
+    CREATE OBJECT go_alv_grid
+      EXPORTING
+        i_appl_events = 'X' "PBO를 EVENT마다 타도록 설정.
+        i_parent      = go_container.
+
+    CALL METHOD go_alv_grid->register_edit_event
+      EXPORTING
+        i_event_id = cl_gui_alv_grid=>mc_evt_modified.
+
+
+*--------------------------------------------------------------------*
+*& class handler 등록
+*--------------------------------------------------------------------*
+    CREATE OBJECT grf_event_receiver.
+    SET HANDLER: grf_event_receiver->handle_on_f4 FOR go_alv_grid.
+
+    PERFORM set_search_help.
+
+    PERFORM set_handler_scr_100.
+    PERFORM go_alv_grid_exclude_func.
+
+    PERFORM add_two_line.
+
+    CALL METHOD go_alv_grid->set_current_cell_via_id
+      EXPORTING
+        is_row_id    = gs_row
+        is_column_id = gs_col.
+
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      EXPORTING
+        it_toolbar_excluding = gt_exclude
+        is_layout            = gs_layout
+      CHANGING
+        it_outtab            = gt_zbbfit_aoj_i
+        it_fieldcatalog      = gt_fieldcat.
+
+  ELSE.
+
+    CALL METHOD go_alv_grid->refresh_table_display.
+
+    CALL METHOD go_alv_grid->set_current_cell_via_id
+      EXPORTING
+        is_row_id    = gs_row
+        is_column_id = gs_col.
+
+  ENDIF.
+
+  IF go_container2 IS INITIAL.
+
+    CREATE OBJECT go_container2
+      EXPORTING
+        container_name = 'CUSTOM_CONTAINER2'.
+
+    CREATE OBJECT go_split_container
+      EXPORTING
+        parent  = go_container2
+        rows    = 2
+        columns = 1.
+
+    CALL METHOD go_split_container->set_row_height
+      EXPORTING
+        id     = 1
+        height = 20.
+
+    CALL METHOD go_split_container->set_row_height
+      EXPORTING
+        id     = 2
+        height = 80.
+
+    CALL METHOD go_split_container->get_container " top매핑
+      EXPORTING
+        row       = 1
+        column    = 1
+      RECEIVING
+        container = go_general_container.
+
+    CALL METHOD go_split_container->get_container " bottom 매핑
+      EXPORTING
+        row       = 2
+        column    = 1
+      RECEIVING
+        container = go_general_container2.
+
+    CREATE OBJECT go_alv_grid2
+      EXPORTING
+        i_parent = go_general_container.
+
+    CREATE OBJECT go_alv_grid3
+      EXPORTING
+        i_parent = go_general_container2.
+
+    PERFORM set_splitter_layo.
+
+*    splitter_top
+    CALL METHOD go_alv_grid2->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_splitter_top_layo
+      CHANGING
+        it_outtab       = gt_inv_h
+        it_fieldcatalog = gt_fieldcat_top.
+
+* splitter_bottom
+    IF zbbfit_aoj_h-inv_no+3(2) = 'MM'.
+      CALL METHOD go_alv_grid3->set_table_for_first_display
+        EXPORTING
+          is_layout       = gs_splitter_bottom_layo
+        CHANGING
+          it_outtab       = gt_mmt_inv_i
+          it_fieldcatalog = gt_fieldcat_bottom.
+    ELSE.
+      CALL METHOD go_alv_grid3->set_table_for_first_display
+        EXPORTING
+          is_layout       = gs_splitter_bottom_layo
+        CHANGING
+          it_outtab       = gt_sdt_inv_i
+          it_fieldcatalog = gt_fieldcat_bottom.
+    ENDIF.
+
+  ELSE.
+
+    CALL METHOD go_alv_grid2->set_table_for_first_display
+      EXPORTING
+        is_layout       = gs_splitter_top_layo
+      CHANGING
+        it_outtab       = gt_inv_h
+        it_fieldcatalog = gt_fieldcat_top.
+
+    IF zbbfit_aoj_h-inv_no+3(2) = 'MM'.
+      CALL METHOD go_alv_grid3->set_table_for_first_display
+        EXPORTING
+          is_layout       = gs_splitter_bottom_layo
+        CHANGING
+          it_outtab       = gt_mmt_inv_i
+          it_fieldcatalog = gt_fieldcat_bottom.
+    ELSE.
+      CALL METHOD go_alv_grid3->set_table_for_first_display
+        EXPORTING
+          is_layout       = gs_splitter_bottom_layo
+        CHANGING
+          it_outtab       = gt_sdt_inv_i
+          it_fieldcatalog = gt_fieldcat_bottom.
+
+    ENDIF.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SELECT_ITEM OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE select_item OUTPUT.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_FIELDCAT_100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_fieldcat_100 OUTPUT.
+  PERFORM set_fieldcat_100. "go_alv_grid의 fieldcat 설정
+  PERFORM set_fieldcat_splitter_top. "go_alv_grid2의 fieldcat 설정
+  PERFORM set_fieldcat_splitter_bottom. "go_alv_grid3의 fieldcat 설정
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_LAYOUT OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_layout OUTPUT.
+  gs_layout-sel_mode = 'A'. " 다중선택모드
+  gs_layout-grid_title = '전표상세내역'.
+  gs_layout-smalltitle = 'X'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_SEARCH_HELP_ON_SCREEN_100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_search_help_on_screen_100 OUTPUT.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_FIELDCAT_SPLITTER_TOP OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_fieldcat_splitter_top OUTPUT.
+  PERFORM set_fieldcat_splitter_top.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_FIELDCAT_SPLITTER_BOTTOM OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_fieldcat_splitter_bottom OUTPUT.
+  PERFORM set_fieldcat_splitter_bottom.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SELECT_SPLITTER_INFO OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE select_splitter_info OUTPUT.
+  PERFORM select_inv_header.
+  PERFORM select_inv_bottom.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module GET_HEADER_TRANS_NM OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE get_header_trans_nm OUTPUT.
+
+  SELECT sp_cd AS trans_cd,
+         sp_nm AS trans_nm
+    FROM zbbmmt_lfa1
+  UNION
+    SELECT cl_cd AS trans_cd,
+          cl_nm AS trans_nm
+    FROM zbbsdt_client
+    INTO CORRESPONDING FIELDS OF TABLE @gt2_trans.
+
+  READ TABLE gt2_trans WITH KEY trans_cd = zbbfit_aoj_h-trans_cd.
+
+  IF zbbfit_aoj_h-trans_cd IS INITIAL.
+    code_name = ''.
+  ELSE.
+    code_name = gt2_trans-trans_nm.
+    gs_inv_h-trans_name = code_name.
+
+    MODIFY gt_inv_h FROM gs_inv_h INDEX 1 TRANSPORTING trans_name.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CHECK_INV_NO OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE check_inv_no OUTPUT.
+
+  PERFORM check_inv_no.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CLEAR_OK_CODE OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE clear_ok_code OUTPUT.
+  CLEAR : ok_code.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CLEAR_HEADER_INFO OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE clear_header_info OUTPUT.
+
+  IF gv_clear = '1'.
+    CLEAR :zbbfit_aoj_h,
+      gt_inv_h,
+      gt_mmt_inv_i,
+      gt_sdt_inv_i,
+      code_name,
+      style_name,
+      state_name,
+      credit_input,
+      debit_input,
+      gt2_trans,
+      gt_zbbfit_aoj_i.
+
+    PERFORM add_two_line.
+
+    PERFORM set_header_info_screnn_100.
+
+*    IF gv_post_date_clear = '0'.
+    CLEAR : zbbfit_aoj_h-fi_post_date.
+    gv_post_date_clear = '1'.
+*    ENDIF.
+
+    gv_clear = '0'.
+
+  ENDIF.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

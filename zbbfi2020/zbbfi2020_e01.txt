@@ -1,0 +1,46 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2020_E01
+*&---------------------------------------------------------------------*
+
+INITIALIZATION.
+  sy-title ='[WISHWASH_FI] 반제처리'.
+*  IF gv_start EQ '1'.
+*    GET PARAMETER ID 'FLG2' FIELD gv_flag2.
+*    IF gv_flag2 = '1'.
+**    ok_code = 'FC01'.
+*      PERFORM select_type_result.
+*    ENDIF.
+*  ENDIF.
+
+  SELECTION-SCREEN FUNCTION KEY 1.
+  PERFORM set_function_key.
+*  PERFORM exclude_initial_btn_run.
+  PERFORM cl_list.
+  PERFORM sp_list.
+  PERFORM btn_icon_set.
+*  BREAK-POINT.
+
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM select_type. " 유형에 따라 보이는 화면이 달라짐.
+
+
+AT SELECTION-SCREEN.
+*  ok_code = sy-ucomm.
+*  CHECK ok_code EQ 'FC01'.
+*  PERFORM select_type_result.
+*  IF ok_code EQ 'FC01'.
+**  gv_start = '1'.
+*    PERFORM select_type_result.
+*  ELSEIF ok_code EQ 'SEARCH'.
+*    PERFORM select_type_result.
+*
+*  ENDIF.
+
+START-OF-SELECTION.
+  PERFORM select_type_result.
+
+
+END-OF-SELECTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

@@ -1,0 +1,167 @@
+*&---------------------------------------------------------------------*
+*& Include          MZBBFI3010_O01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Module STATUS_0100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'STATUS_100'.
+  SET TITLEBAR 'TITLEBAR_100'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module STATUS_0200 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0200 OUTPUT.
+
+*  DATA: BEGIN OF ls_extab,
+*          fcode TYPE c LENGTH 10,
+*        END OF ls_extab,
+*        lt_extab LIKE TABLE OF ls_extab.
+*  gv_flag = '5'.
+*  IF gv_flag = '1' OR gv_flag ='5'.
+*
+**    ls_extab-fcode = 'EXDOWN'.
+**    APPEND ls_extab TO lt_extab.
+*
+*    SET PF-STATUS 'STATUS_201'.
+*    SET TITLEBAR 'TITLEBAR_200'.
+*  ELSE.
+  SET PF-STATUS 'STATUS_200'.
+  SET TITLEBAR 'TITLEBAR_200'.
+*  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CREATE_ALV OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE create_alv OUTPUT.
+
+  PERFORM set_screen200. " SCREEN 100에서 검색하는 건에 대해 SCREEN 200 HEADER에 넣어주기.
+  PERFORM sel_item.
+
+  IF go_container IS INITIAL.
+
+    PERFORM create_obj.
+    PERFORM set_layout.
+    PERFORM set_sort.
+    PERFORM set_field_catalog.
+    PERFORM display_alv.
+
+  ELSEIF gv_refresh_flag = '0' AND go_container IS NOT INITIAL.
+
+    PERFORM refresh_alv_screen_200.
+
+  ELSE.
+
+    gv_refresh_flag = '0'.
+    CALL METHOD go_alv_grid->refresh_table_display.
+
+  ENDIF.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_ID OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_id OUTPUT.
+
+*  PERFORM set_id.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CLEAR_SET_FLAG OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE clear_set_flag OUTPUT.
+  IF gv_flag = '1' OR gv_flag = '5'.
+    gv_flag = '0'.
+    SET PARAMETER ID 'FLG' FIELD gv_flag.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CLEAR_OK_CODE OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE clear_ok_code OUTPUT.
+  CLEAR ok_code.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SET_CURSOR OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_cursor OUTPUT.
+  SET CURSOR FIELD gv_cursor.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module CHECK_GV_FLAG OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE check_gv_flag OUTPUT.
+
+  GET PARAMETER ID 'FLG' FIELD gv_flag.
+
+  IF gv_flag = '1' OR gv_flag = '5'.
+
+    GET PARAMETER ID 'FIN' FIELD fi_no.
+    GET PARAMETER ID 'FIY' FIELD fi_year.
+    GET PARAMETER ID 'STA' FIELD zbbfit_aoj_h-state.
+    GET PARAMETER ID 'STY' FIELD zbbfit_aoj_h-fi_style.
+    GET PARAMETER ID 'FIP' FIELD zbbfit_aoj_h-fi_post_date.
+    GET PARAMETER ID 'TRC' FIELD zbbfit_aoj_h-trans_cd.
+    GET PARAMETER ID 'TRN' FIELD zbbfit_aoj_h-trans_nm.
+    GET PARAMETER ID 'INV' FIELD zbbfit_aoj_h-inv_no.
+    GET PARAMETER ID 'DEA' FIELD zbbfit_aoj_h-deadline.
+    GET PARAMETER ID 'DET' FIELD zbbfit_aoj_h-detail.
+
+    CALL SCREEN 200.
+
+  ELSEIF gv_flag = '0'.
+
+    CLEAR : fi_no , fi_year.
+
+  ELSEIF gv_flag = '2'.
+
+    fi_no = fi_no.
+    fi_year = fi_year.
+
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module SELECLT_AOJ_I OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE seleclt_aoj_i OUTPUT.
+  PERFORM sel_item.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module STATUS_0210 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0210 OUTPUT.
+*  SET PF-STATUS 'STATUS_0210'.
+  SET TITLEBAR 'TITLEBAR_0210'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Module STAT OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE stat OUTPUT.
+  SET PF-STATUS 'STAT'.
+* SET TITLEBAR 'xxx'.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

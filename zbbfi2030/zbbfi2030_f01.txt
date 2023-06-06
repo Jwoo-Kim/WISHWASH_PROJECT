@@ -1,0 +1,1855 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2030_F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form on_toolbar_scr_100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_OBJECT
+*&---------------------------------------------------------------------*
+FORM on_toolbar_scr_100  USING    p_object TYPE REF TO cl_alv_event_toolbar_set.
+  DATA : ls_button TYPE stb_button.
+  CLEAR ls_button.
+
+* 구분선
+  ls_button-butn_type = 3.
+  INSERT ls_button INTO TABLE p_object->mt_toolbar.
+
+* 행추가 버튼
+  ls_button-butn_type = 0.
+  ls_button-function = 'ADD'.
+  ls_button-icon = icon_insert_row.
+  ls_button-text = '행추가'.
+  INSERT ls_button INTO TABLE p_object->mt_toolbar.
+
+* 행삭제 버튼
+  ls_button-butn_type = 0.
+  ls_button-function = 'DELETE'.
+  ls_button-icon = icon_delete_row.
+  ls_button-text = '행삭제'.
+  INSERT ls_button INTO TABLE p_object->mt_toolbar.
+
+*  ls_button-butn_type = 0.
+*  ls_button-function = 'SAVE'.
+*  ls_button-icon = icon_system_save.
+*  ls_button-text = '저장'.
+*  INSERT ls_button INTO TABLE p_object->mt_toolbar.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form on_user_command_scr_100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_UCOMM
+*&---------------------------------------------------------------------*
+FORM on_user_command_scr_100  USING p_ucomm.
+
+*  DATA : lv_chk. "전표입력 창 ROW 선택 여부. X는 선택 X
+
+  CASE p_ucomm.
+    WHEN 'ADD'.
+      gc_fieldcat = 'X'. " 행 추가시 선택모드
+
+      CLEAR : gs_zbbfit_aoj_i.
+      gs_zbbfit_aoj_i-currency = 'KRW'.
+      APPEND gs_zbbfit_aoj_i TO gt_zbbfit_aoj_i.
+
+      PERFORM set_fieldcat_100.
+
+      CALL METHOD go_alv_grid->set_table_for_first_display
+        CHANGING
+          it_fieldcatalog = gt_fieldcat
+          it_outtab       = gt_zbbfit_aoj_i.
+
+    WHEN 'DELETE'.
+      PERFORM get_selected_row.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SET_HANDLER_SCR_100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_handler_scr_100 .
+
+  SET HANDLER : lcl_handler=>on_toolbar_scr_100 FOR go_alv_grid,
+                lcl_handler=>on_user_command_scr_100 FOR go_alv_grid,
+                lcl_handler=>on_data_changed FOR go_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form GET_SELECTED_ROW
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_CHK
+*&---------------------------------------------------------------------*
+FORM get_selected_row.
+  DATA : lt_row_no TYPE lvc_t_roid,
+         ls_row_no TYPE lvc_s_roid.
+
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row_no.
+
+  IF lines( lt_row_no ) > 0.
+    LOOP AT lt_row_no INTO ls_row_no.
+      READ TABLE gt_zbbfit_aoj_i INTO gs_zbbfit_aoj_i INDEX ls_row_no-row_id.
+
+      gs_zbbfit_aoj_i-dflag = 'D'. "삭제
+
+      MODIFY gt_zbbfit_aoj_i FROM gs_zbbfit_aoj_i INDEX ls_row_no-row_id TRANSPORTING dflag.
+
+    ENDLOOP.
+  ELSE.
+    MESSAGE '삭제할 ROW를 한 건 이상 선택해 주세요.' TYPE 'S' DISPLAY LIKE 'E'.
+  ENDIF.
+
+  DELETE gt_zbbfit_aoj_i WHERE dflag = 'D'.
+
+  IF gt_zbbfit_aoj_i IS INITIAL.
+    "edit 모드 삭제.
+    gc_fieldcat = ''. " 행 추가시 선택모드
+
+    CLEAR : gs_zbbfit_aoj_i.
+
+    PERFORM set_fieldcat_100.
+
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      CHANGING
+        it_fieldcatalog = gt_fieldcat
+        it_outtab       = gt_zbbfit_aoj_i.
+  ENDIF.
+
+  CALL METHOD go_alv_grid->refresh_table_display.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save .
+
+  DATA : lv_message TYPE c LENGTH 40,
+         lv_chk.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '전표생성'
+      text_question         = '전표를 생성하시겠습니까?'
+      icon_button_1         = 'ICON_CHECKED'
+      text_button_1         = '예'
+      icon_button_2         = 'ICON_CANCEL'
+      text_button_2         = '아니오'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = lv_chk.
+
+  IF sy-subrc <> 0.
+    MESSAGE s000 WITH '오류가 발생하였습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+
+  IF lv_chk = '1'.
+
+*    IF credit_input EQ debit_input.
+    IF balance EQ 0.
+      IF zbbfit_aoj_h-inv_no IS NOT INITIAL.
+        PERFORM create_zbbfit.
+
+        IF sy-subrc = 0.
+
+          CONCATENATE '전표번호 ' gv_fi_no '가 정상적으로 생성되었습니다.' INTO lv_message.
+          CLEAR code_name.
+          gv_post_date_clear = '0'.
+          MESSAGE s000 WITH lv_message.
+*        PERFORM forced_pbo.
+        ELSE.
+          MESSAGE s000 WITH '전표생성에 오류가 발생했습니다.' DISPLAY LIKE 'E'.
+        ENDIF.
+
+      ELSE.
+        MESSAGE s000 WITH '인보이스 번호를 입력해주세요' DISPLAY LIKE 'E'.
+      ENDIF.
+
+
+
+    ELSE.
+      MESSAGE s000 WITH '차변과 대변 금액이 일치하지않습니다.' DISPLAY LIKE 'E'.
+    ENDIF.
+
+  ELSE.
+    MESSAGE s000 WITH '전표 생성이 취소되었습니다.' DISPLAY LIKE 'W'.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fieldcat_100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_fieldcat_100 .
+
+  DATA : pos TYPE i. " col_pos지정을 위한 변수 1부터 시작
+  pos = 1.
+
+  REFRESH gt_fieldcat.
+
+  CLEAR gs_fieldcat.
+  pos = pos + 1.
+  gs_fieldcat-fieldname = 'POSITIONS'. " set_table_for_first_display의 chaning부분의 outtab의 필드와 비교
+  gs_fieldcat-ref_field = 'POSITIONS'. " set_table_for_first_display의 exporting부분의
+  " i_structure_name의 테이블의 값 참조
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_I'. " i_structure_name의 테이블설정
+  gs_fieldcat-f4availabl = 'X'. " search help 버튼 활성화
+  gs_fieldcat-col_pos = pos. " fieldcat 위치지정
+  gs_fieldcat-edit = 'X'. " 수정가능 모드
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  CLEAR gs_fieldcat.
+  pos = pos + 1.
+  gs_fieldcat-fieldname = 'BUN_NAME'.
+*  gs_fieldcat-ref_field = 'ACCOUNT_NO'.
+*  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+*  gs_fieldcat-f4availabl = 'X'.
+  gs_fieldcat-coltext = '분개'.
+  gs_fieldcat-col_pos = pos.
+*  gs_fieldcat-edit = 'X'.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  CLEAR gs_fieldcat.
+  pos = pos + 1.
+  gs_fieldcat-fieldname = 'ACCOUNT_NO'.
+  gs_fieldcat-ref_field = 'ACCOUNT_NO'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_fieldcat-f4availabl = 'X'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-edit = 'X'.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  CLEAR gs_fieldcat.
+  pos = pos + 1.
+  gs_fieldcat-fieldname = 'ACCOUNT_NAME'.
+*  gs_fieldcat-ref_field = 'ACCOUNT_NO'.
+*  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+*  gs_fieldcat-f4availabl = 'X'.
+  gs_fieldcat-coltext = '계정이름'.
+  gs_fieldcat-col_pos = pos.
+*  gs_fieldcat-edit = 'X'.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  CLEAR gs_fieldcat.
+  pos = pos + 1.
+  gs_fieldcat-fieldname = 'MONEY'.
+  gs_fieldcat-ref_field = 'MONEY'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-edit = 'X'.
+  gs_fieldcat-cfieldname = 'CURRENCY'.
+  gs_fieldcat-just = 'R'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+  CLEAR gs_fieldcat.
+  pos = pos + 1.
+  gs_fieldcat-fieldname = 'CURRENCY'.
+  gs_fieldcat-ref_field = 'CURRENCY'.
+  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+  gs_fieldcat-col_pos = pos.
+  gs_fieldcat-just = 'C'.
+  APPEND gs_fieldcat TO gt_fieldcat.
+
+*  CLEAR gs_fieldcat.
+*  pos = pos + 1.
+*  gs_fieldcat-fieldname = 'MAT_CD'.
+*  gs_fieldcat-ref_field = 'MAT_CD'.
+*  gs_fieldcat-ref_table = 'ZBBFIT_AOJ_I'.
+*  gs_fieldcat-f4availabl = 'X'.
+*  gs_fieldcat-col_pos = pos.
+*  gs_fieldcat-edit = 'X'.
+*  gs_fieldcat-just = 'C'.
+*  APPEND gs_fieldcat TO gt_fieldcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Module SET_HEADER_INFO_SCRENN_100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_header_info_screnn_100 OUTPUT.
+  PERFORM add_text_bun_and_account.
+  PERFORM set_header_info_screnn_100.
+  PERFORM sum_positions. " 차변/대변 의 합과 밸런스(차액)을 구함.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form set_header_info_screnn_100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_header_info_screnn_100 .
+
+  PERFORM set_snro.
+
+  IF gv_post_date_clear = '0'.
+    zbbfit_aoj_h-fi_post_date = sy-datum. " 전기일 setting
+    gv_post_date_clear = '2'.
+  ENDIF.
+
+  IF zbbfit_aoj_h-fi_style = 'GE'.
+    style_name = '일반전표'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_snro
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_snro .
+  SELECT * FROM zbbfit_aoj_h INTO TABLE gt_zbbfit_aoj_h.
+
+  IF sy-subrc <> 0 AND sy-subrc <> 4.
+    MESSAGE '오류발생' TYPE 'S' DISPLAY LIKE 'E'.
+  ENDIF.
+
+  gv_lines = lines( gt_zbbfit_aoj_h ).
+
+  IF gv_lines = 0.
+*    gv_lines = 0.
+    gv_lines = 1000000000.
+
+    zbbfit_aoj_h-fi_no = gv_lines. " 전표번호 setting
+  ELSE.
+    READ TABLE gt_zbbfit_aoj_h INTO gs_zbbfit_aoj_h INDEX gv_lines.
+    zbbfit_aoj_h-fi_no = gs_zbbfit_aoj_h-fi_no + 1.
+  ENDIF.
+
+*  zbbfit_aoj_h-fi_no = gv_lines. " 전표번호 setting
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_data_src100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_data_src100 .
+
+*  RANGES : lr_inv FOR zbbsdt_invo_h-inv_no.
+
+  DATA : ls_value LIKE gs_value.
+  DATA : lt_value LIKE TABLE OF ls_value.
+
+  DATA : ls_fi TYPE zbbfit_aoj_h.
+  DATA : lt_fi LIKE TABLE OF ls_fi.
+
+*  1. 판매/구매 인보이스 union
+*  SELECT inv_no
+*    FROM zbbsdt_invo_h
+*  UNION
+*    SELECT inv_no
+*    FROM zbbmmt_invo_h
+*    INTO CORRESPONDING FIELDS OF TABLE @gt_value.
+
+*   1. 판매/구매 인보이스 union
+  SELECT inv_no
+    FROM zbbsdt_invo_h
+  UNION
+  SELECT inv_no
+    FROM zbbmmt_invo_h
+    INTO CORRESPONDING FIELDS OF TABLE @lt_value.
+
+  SORT lt_value BY inv_no.
+
+* flag(역분개 여부 -> '' : 역분개x, '1' : 역분개) 없는 inv_no(인보이스 번호)를 가져옴.
+  SELECT inv_no FROM zbbfit_aoj_h
+                INTO CORRESPONDING FIELDS OF TABLE lt_fi
+                WHERE ( flag = '0' OR flag IS NULL ).
+
+* inv_no sorting and 중복 제거
+  SORT lt_fi BY inv_no.
+  DELETE ADJACENT DUPLICATES FROM lt_fi COMPARING inv_no.
+
+* 전표 header에 있는 inv_no 제거하여 전표생성의 inv_no목록을 보여줌
+  LOOP AT lt_value INTO ls_value.
+    READ TABLE lt_fi INTO ls_fi WITH KEY inv_no = ls_value-inv_no BINARY SEARCH.
+    IF Sy-subrc = 0.
+      DELETE TABLE lt_value FROM ls_value.
+      CLEAR ls_value.
+    ENDIF.
+  ENDLOOP.
+
+  gt_value[] = lt_value[].
+
+*2. 인보이스 중 전표생성이 안된 목록만 가져오기
+  IF sy-subrc <> 0.
+    MESSAGE 'Data Union Fail' TYPE 'E'.
+*    else.
+*    성공
+  ENDIF.
+
+*--------------------------------------------------------------------*
+* 화면에 뿌려줄 필드정보를 정의한다.
+*--------------------------------------------------------------------*
+  PERFORM set_gt_field.
+
+*--------------------------------------------------------------------*
+* 사용자가 데이터 선택 후 화면필드와 매핑시킬 데이터를 추가함.
+*--------------------------------------------------------------------*
+  PERFORM set_gt_map.
+  PERFORM set_gt_update.
+
+*  gv_post_date_clear = '0'.
+*  PERFORM set_trans_cd_searc_help.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_gt_field
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_gt_field .
+  REFRESH : gt_field.
+
+  gt_field-fieldname = 'INV_NO'.
+  gt_field-outputlen = 30.
+  gt_field-leng = 30.
+  gt_field-intlen = 30.
+  gt_field-reptext = '인보이스번호'.
+  APPEND gt_field.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_gt_map
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_gt_map .
+  REFRESH : gt_map.
+  gt_map-fldname = 'INV_NO'.
+  gt_map-dyfldname = 'ZBBFIT_AOJ_H-INV_NO'.
+  APPEND gt_map.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'INV_NO'
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      window_title    = '인보이스목록'
+      value_org       = 'C'
+    TABLES
+      value_tab       = gt_value
+      field_tab       = gt_field
+      return_tab      = gt_return
+      dynpfld_mapping = gt_map
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+*  IF sy-subrc <> 0.
+** Implement suitable error handling here
+*  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_gt_update
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_gt_update .
+
+  REFRESH : gt_update.
+
+  gt_update-fieldname = 'ZBBFIT_AOJ_H-INV_NO'.
+  READ TABLE gt_return WITH KEY retfield = gt_update-fieldname.
+  IF sy-subrc = 0.
+    gt_update-fieldvalue = gt_return-fieldval.
+    APPEND gt_update.
+
+    CALL FUNCTION 'DYNP_VALUES_UPDATE'
+      EXPORTING
+        dyname     = sy-cprog
+        dynumb     = sy-dynnr
+      TABLES
+        dynpfields = gt_update.
+
+    DATA : lv_state TYPE zbbfit_aoj_h-state.
+    READ TABLE gt_update INDEX 1.
+
+    lv_state = gt_update-fieldvalue+3(2).
+
+    CLEAR : gv_by_inv_no.
+
+    gv_by_inv_no = gt_update-fieldvalue. " inv_no 저장
+
+    IF lv_state = 'SD'.
+      PERFORM setting_heading_by_sd_inv.
+      zbbfit_aoj_h-state = 'EX'.
+      state_name = '매출'.
+      zbbfit_aoj_h-fi_style  = 'GE'.
+      style_name = '일반전표'.
+    ELSEIF lv_state = 'MM'.
+      zbbfit_aoj_h-state = 'IN'.
+      state_name = '매입'.
+      zbbfit_aoj_h-fi_style  = 'GE'.
+      style_name = '일반전표'.
+    ENDIF.
+
+    "강제 PBO타게하는 FUNCTION.
+    CALL FUNCTION 'SAPGUI_SET_FUNCTIONCODE'
+      EXPORTING
+        functioncode           = 'ENTE'
+      EXCEPTIONS
+        function_not_supported = 1
+        OTHERS                 = 2.
+
+  ELSEIF sy-subrc = 4.
+    MESSAGE s000 WITH '전표를 생성할 인보이스 목록이 존재하지 않습니다.'.
+  ELSE.
+    MESSAGE e000 WITH '인보이스 목록을 가져오는데 오류가 발생하였습니다.'.
+  ENDIF.
+
+
+
+
+*IF sy-subrc <> 0.
+** Implement suitable error handling here
+*ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  F4IF  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE f4if INPUT.
+  PERFORM set_search_help_data_src100.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form on_f4
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> SENDER
+*&      --> E_FIELDNAME
+*&      --> E_FIELDVALUE
+*&      --> ER_ROW_NO
+*&      --> ER_EVENT_DATA
+*&      --> ET_BAD_CELLS
+*&      --> E_DISPLAY
+*&---------------------------------------------------------------------*
+FORM on_f4  USING    pc_sender TYPE REF TO cl_gui_alv_grid
+                     pv_fieldname TYPE lvc_fname " f4 클릭한 필드
+                     pv_fieldvalue TYPE lvc_value "f4 클릭한 필드값
+                     ps_row_no TYPE lvc_s_roid " f4 클릭한 필드 라인
+                     pr_event_data TYPE REF TO cl_alv_event_data
+                     pt_bad_cells TYPE lvc_t_modi
+                     pv_display TYPE char01. " 활성화 : , 비활성화 : 'X' "
+
+
+  DATA : ls_lvc_modi TYPE lvc_s_modi.
+  FIELD-SYMBOLS : <f4tab> TYPE lvc_t_modi.
+
+  " EVENT WAS HANDLED 속성
+  pr_event_data->m_event_handled = 'X'.
+
+
+  "서치헬프 FUCNTION
+  PERFORM set_data_trans_cd.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'TRANS_CD'
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'TRANS_CD'
+      window_title    = '거래처목록'
+      value_org       = 'S'
+    TABLES
+      value_tab       = gt_trans
+      return_tab      = gt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+  pV_fieldname = 'TRANS_CD'.
+
+  ASSIGN pr_event_data->m_data->* TO <f4tab>.
+  ls_lvc_modi-row_id    = ps_row_no-row_id.
+  ls_lvc_modi-fieldname = pV_fieldname.
+  ls_lvc_modi-value     =  gt_return-fieldval. "(펑션리턴값)
+  APPEND ls_lvc_modi TO <f4tab>.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form f4_kkref_new
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> PV_FIELDNAME
+*&      --> PS_ROW_NO_ROW_ID
+*&      <-- PV_FIELDVALUE
+*&---------------------------------------------------------------------*
+FORM f4_trans_cd_new   USING    pv_fieldname TYPE lvc_fname
+                            ps_row_no_row_id TYPE int4
+                   CHANGING pv_fieldvalue TYPE lvc_value.
+
+  DATA : lt_return_tab TYPE ddshretval OCCURS 0,
+         ls_return_tab LIKE LINE OF lt_return_tab.
+
+  DATA : BEGIN OF gt_value OCCURS 0,
+           trans_cd TYPE zbbmmt_lfa1-sp_cd,
+           trans_nm TYPE zbbmmt_lfa1-sp_nm,
+         END OF gt_value.
+
+  DATA : lv_retfield    TYPE dfies-fieldname,
+         lv_dynprofield TYPE help_info-dynprofld.
+
+  CLEAR pv_fieldvalue.
+
+*  1. 데이터 가져오기.
+  PERFORM set_data_trans_cd.
+
+
+*  2. 화면에 뿌려줄 필드정보를 정의
+  PERFORM set_field_trans_cd.
+
+*  3. 사용자가 데이터 선택 후 화면필드와 매핑시킬 데이터를 추가함.
+  PERFORM mapping_trans_cd.
+  PERFORM set_trans_cd_update.
+*  lv_retfield = 'TRANS_CD'.
+*  lv_dynprofield = pv_fieldname.
+
+
+
+
+  DATA : BEGIN OF lt_trans_cd OCCURS 0,
+           trans_cd TYPE zbbmmt_lfa1-sp_cd,
+           trans_nm TYPE zbbmmt_lfa1-sp_nm,
+         END OF lt_trans_cd.
+
+*         1. 데이터 가져오기.
+  SELECT sp_cd AS trans_cd,
+    sp_nm AS trans_nm
+    FROM zbbmmt_lfa1
+      UNION
+  SELECT cl_cd AS trans_cd,
+    cl_nm AS trans_nm
+    FROM zbbsdt_client
+    INTO CORRESPONDING FIELDS OF TABLE @lt_trans_cd .
+
+  IF sy-subrc <> 0.
+    MESSAGE '오류 발생' TYPE 'E'.
+*  ELSE.
+*    "성공
+  ENDIF.
+
+  PERFORM set_trans_cd_gt_field.
+  PERFORM set_trans_gt_map.
+  PERFORM set_trans_gt_update.
+
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_trans_cd_gt_field
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_trans_cd_gt_field .
+  REFRESH : gt_field.
+
+  gt_field-fieldname = 'TRANS_CD'.
+  gt_field-outputlen = 30.
+  gt_field-leng = 30.
+  gt_field-intlen = 30.
+  gt_field-reptext = '거래선코드'.
+  APPEND gt_field.
+
+  gt_field-fieldname = 'TRANS_NM'.
+  gt_field-outputlen = 30.
+  gt_field-leng = 30.
+  gt_field-intlen = 30.
+  gt_field-reptext = '거래선이름'.
+  APPEND gt_field.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_trans_gt_map
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_trans_gt_map .
+*  REFRESH : gt_map.
+*  gt_map-fldname = 'TRANS_CD'.
+*  gt_map-dyfldname = gt_zbbfit_aoj_i-trans_cd.
+*  APPEND gt_map.
+*
+**  gt_map-fldname = 'TRANS_NM'.
+**  gt_map-dyfldname = gt_zbbfit_aoj_i-trans_cd.
+**  APPEND gt_map.
+*
+*
+*  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+*    EXPORTING
+*      retfield        = 'TRANS_CD'
+*      dynpprog        = sy-repid
+*      dynpnr          = sy-dynnr
+*      window_title    = '거래선목록'
+*      value_org       = 'C'
+*    TABLES
+*      value_tab       = gt_value
+*      field_tab       = gt_field
+*      return_tab      = gt_return
+*      dynpfld_mapping = gt_map
+*    EXCEPTIONS
+*      parameter_error = 1
+*      no_values_found = 2
+*      OTHERS          = 3.
+*  IF sy-subrc <> 0.
+** Implement suitable error handling here
+*  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_trans_gt_update
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_trans_gt_update .
+
+*  REFRESH : gt_update.
+*
+*  gt_update-fieldname = 'GT_zBBFIT_AOJ_I-TRANS_CD'.
+*  READ TABLE gt_return WITH KEY retfield = gt_update-fieldname.
+*  IF sy-subrc = 0.
+*    gt_update-fieldvalue = gt_return-fieldval.
+*    APPEND gt_update.
+*  ENDIF.
+*
+*  CALL FUNCTION 'DYNP_VALUES_UPDATE'
+*    EXPORTING
+*      dyname     = sy-cprog
+*      dynumb     = sy-dynnr
+*    TABLES
+*      dynpfields = gt_update.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_data_trans_cd
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_data_trans_cd .
+
+  SELECT sp_cd AS trans_cd,
+           sp_nm AS trans_nm
+      FROM zbbmmt_lfa1
+    UNION
+      SELECT cl_cd AS trans_cd,
+            cl_nm AS trans_nm
+      FROM zbbsdt_client
+      INTO CORRESPONDING FIELDS OF TABLE @gt_trans.
+
+  IF sy-subrc <> 0.
+    MESSAGE '오류발생' TYPE 'E'.
+*  else.
+*    " 성공.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_field_trans_cd
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_field_trans_cd .
+  CLEAR : gt_field.
+  gt_field-fieldname = 'TRANS_CD'.
+  gt_field-outputlen = 20.
+  gt_field-leng = 20.
+  gt_field-intlen = 20.
+  gt_field-reptext = '거래선코드'.
+  APPEND gt_field.
+
+  CLEAR : gt_field.
+  gt_field-fieldname = 'TRANS_NM'.
+  gt_field-outputlen = 20.
+  gt_field-leng = 20.
+  gt_field-intlen = 20.
+  gt_field-reptext = '거래선이름'.
+  APPEND gt_field.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form mapping_trans_cd
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM mapping_trans_cd .
+  CLEAR : gt_map.
+  gt_map-fldname = 'TRANS_CD'.
+  gt_map-dyfldname = 'GT_ZBBFIT_AOJ_I-TRANS_CD'.
+  APPEND gt_map.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'TRANS_CD'
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      window_title    = '거래선목록'
+      value_org       = 'C'
+    TABLES
+      value_tab       = gt_value
+      field_tab       = gt_field
+      return_tab      = gt_return
+      dynpfld_mapping = gt_map
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_trans_cd_update
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_trans_cd_update .
+
+  REFRESH : gt_update.
+
+  gt_update-fieldname = 'GT_ZBBFIT_AOJ_I-TRANS_CD'.
+  READ TABLE gt_return WITH KEY retfield = gt_update-fieldname.
+  IF sy-subrc = 0.
+    gt_update-fieldvalue = gt_return-fieldval.
+    APPEND gt_update.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help .
+
+  DATA : gt_f4 TYPE lvc_t_f4,
+         gs_f4 TYPE lvc_s_f4.
+
+  "서치헬프를 적용할 필드를 지정해줌.
+  gs_f4-fieldname = 'TRANS_CD'.
+  gs_f4-register = 'X'.
+  INSERT gs_f4 INTO TABLE gt_f4.
+
+  CALL METHOD go_alv_grid->register_f4_for_fields
+    EXPORTING
+      it_f4 = gt_f4.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_zbbfit
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_zbbfit .
+*--------------------------------------------------------------------*
+*& 헤더전표생성
+* 추가해야할 목록
+* client / 전표번호 / 회계연도 / 전표유형 / 전기일 / 인보이스번호 / 생성자 / 생성일 / 생성시간
+*--------------------------------------------------------------------*
+  DATA : lv_zbbfit_aoj_h TYPE zbbfit_aoj_h,
+         lv_zbbfit_aoj_i TYPE zbbfit_aoj_i,
+         lt_zbbfit_aoj_h TYPE TABLE OF zbbfit_aoj_h,
+         ls_inv_h        LIKE gs_inv_h,
+         lv_lines        TYPE i.
+
+  CLEAR lv_zbbfit_aoj_h.
+
+  SELECT *
+    FROM zbbfit_aoj_h
+    INTO CORRESPONDING FIELDS OF TABLE lt_zbbfit_aoj_h.
+
+  SORT lt_zbbfit_aoj_h BY fi_no.
+
+  lv_lines = lines( lt_zbbfit_aoj_h ).
+
+  if lv_lines <> 0.
+    " 마지막 row에 대한
+    READ TABLE lt_zbbfit_aoj_h INDEX lv_lines INTO lv_zbbfit_aoj_h.
+    zbbfit_aoj_h-fi_no = lv_zbbfit_aoj_h-fi_no + 1.
+  else.
+    zbbfit_aoj_h-fi_no = 1000000000.
+  ENDIF.
+  "전표번호 새로 생성 = 기존 + 1
+*  lv_zbbfit_aoj_h-fi_no = lv_zbbfit_aoj_h-fi_no + 1.
+
+  LOOP AT gt_inv_h INTO gs_inv_h.
+    ls_inv_h-total = gs_inv_h-total.
+  ENDLOOP.
+
+
+
+*  zbbfit_aoj_h-fi_post_date = sy-datum. " 전기일 setting
+
+  lv_zbbfit_aoj_h-mandt = 100. " mandt
+  lv_zbbfit_aoj_h-fi_no = zbbfit_aoj_h-fi_no. " 전표번호
+  lv_zbbfit_aoj_h-fi_year = zbbfit_aoj_h-fi_post_date(4). " 회계연도
+  lv_zbbfit_aoj_h-fi_month = sy-datum+4(2). " 전표월
+  lv_zbbfit_aoj_h-fi_post_date = zbbfit_aoj_h-fi_post_date. " 전표전기일
+  lv_zbbfit_aoj_h-payment_flag = '0'. " 0 : 반제처리안됨 , 1 : 반제처리 완료
+  lv_zbbfit_aoj_h-fi_style = zbbfit_aoj_h-fi_style. " 전표유형
+  lv_zbbfit_aoj_h-state = zbbfit_aoj_h-state.
+  lv_zbbfit_aoj_h-deadline = zbbfit_aoj_h-deadline.
+  lv_zbbfit_aoj_h-trans_cd = zbbfit_aoj_h-trans_cd.
+  lv_zbbfit_aoj_h-trans_nm = code_name.
+  lv_zbbfit_aoj_h-detail = zbbfit_aoj_h-detail.
+  lv_zbbfit_aoj_h-inv_no = zbbfit_aoj_h-inv_no. " 인보이스번호
+  lv_zbbfit_aoj_h-cuser = sy-uname. " 생성자
+  lv_zbbfit_aoj_h-cdate = sy-datum. " 생성일
+  lv_zbbfit_aoj_h-ctime = sy-uzeit. " 생성시간
+  lv_zbbfit_aoj_h-flag = '0'. "역분개 여부
+  lv_zbbfit_aoj_h-flag_fi_no = ''. "역분개시 전표번호
+  lv_zbbfit_aoj_h-payment_flag = '0'. "반제여부 : 아니오
+  lv_zbbfit_aoj_h-payment_fi_no = ''. "반제원전표번호 : null
+
+  gv_fi_no = zbbfit_aoj_h-fi_no.
+
+  INSERT zbbfit_aoj_h FROM lv_zbbfit_aoj_h. " 전표헤더테이블 저장
+
+  IF sy-subrc <> 0.
+    MESSAGE s000 WITH '헤더 정보저장시 오류가 발생하였습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+
+  IF sy-subrc <> 0.
+    MESSAGE '헤더 생성 오류' TYPE 'E'.
+  ELSEIF sy-subrc = 0.
+*    전표 item 생성
+
+    DATA : ls_zbbfit_aoj_i LIKE gs_zbbfit_aoj_i, " 전표item 변수
+*           ls_zbbfit_aoj_i TYPE zbbfit_aoj_i, " 전표item 변수
+           lv_ln           TYPE i VALUE 1. " 전표라인
+
+    CLEAR : ls_zbbfit_aoj_i.
+
+    LOOP AT gt_zbbfit_aoj_i INTO gs_zbbfit_aoj_i.
+
+      ls_zbbfit_aoj_i-mandt = 100. "client
+      ls_zbbfit_aoj_i-fi_no = lv_zbbfit_aoj_h-fi_no. "전표번호
+      ls_zbbfit_aoj_i-fi_year = zbbfit_aoj_h-fi_post_date(4). " 회계연도
+      ls_zbbfit_aoj_i-fi_ln = lv_ln. " 전표라인
+      ls_zbbfit_aoj_i-payment = gs_zbbfit_aoj_i-payment. " 반제전표
+      ls_zbbfit_aoj_i-state = gs_zbbfit_aoj_i-state. " 구분
+      ls_zbbfit_aoj_i-account_no = gs_zbbfit_aoj_i-account_no. " 계정번호
+      ls_zbbfit_aoj_i-money = gs_zbbfit_aoj_i-money. " 가격
+      ls_zbbfit_aoj_i-currency = gs_zbbfit_aoj_i-currency. " 화폐단위
+      ls_zbbfit_aoj_i-positions = gs_zbbfit_aoj_i-positions. " 차변/대변
+      ls_zbbfit_aoj_i-mat_cd = gs_zbbfit_aoj_i-mat_cd. " 자재코드
+      ls_zbbfit_aoj_i-detail = gs_zbbfit_aoj_i-detail. " 적요
+      ls_zbbfit_aoj_i-fi_post_date = zbbfit_aoj_h-fi_post_date. " 전기일
+      ls_zbbfit_aoj_i-deadline = lv_zbbfit_aoj_h-deadline. " 입금기한
+      ls_zbbfit_aoj_i-trans_cd = gs_zbbfit_aoj_i-trans_cd. " 거래처코드
+      ls_zbbfit_aoj_i-cuser = sy-uname. " 생성자
+      ls_zbbfit_aoj_i-cdate = sy-datum. " 생성일
+      ls_zbbfit_aoj_i-ctime = sy-uzeit. " 생성시간
+
+      IF ls_zbbfit_aoj_i-positions IS INITIAL.
+        MESSAGE e000 WITH '차변/대변을 입력해주세요'.
+      ENDIF.
+
+      IF ls_zbbfit_aoj_i-account_no IS INITIAL.
+        MESSAGE e000 WITH '계정번호를 입력해주세요'.
+      ENDIF.
+
+      IF ls_zbbfit_aoj_i-money <> ls_inv_h-total.
+        MESSAGE e000 WITH '인보이스의 금액과 전표에 입력된 금액이 다릅니다'.
+      ENDIF.
+
+      lv_ln = lv_ln + 1. " 다음 행 추가시 전표라인 + 1
+
+      MODIFY gt_zbbfit_aoj_i FROM ls_zbbfit_aoj_i TRANSPORTING
+      mandt fi_no fi_year fi_ln payment state account_no money
+      currency positions mat_cd detail fi_post_date deadline trans_cd
+      cuser cdate ctime.
+
+    ENDLOOP.
+
+    INSERT zbbfit_aoj_i FROM TABLE gt_zbbfit_aoj_i. " 전표 item table 저장
+
+    IF sy-subrc = 0.
+      REFRESH : gt_zbbfit_aoj_i.
+
+      CLEAR : zbbfit_aoj_h, style_name, state_name, code_name, gt_sdt_inv_i, gt_mmt_inv_i.
+
+      PERFORM add_two_line.
+
+    ENDIF.
+*    INSERT zbbfit_aoj_i CLIENT SPECIFIED FROM TABLE gt_zbbfit_aoj_i.
+  ENDIF.
+
+
+
+*--------------------------------------------------------------------*
+*& 아이템전표 생성
+* 추가해야할 목록
+* client / 전표번호 / 회계연도 / 전표라인 / 구분(v)/ 계정번호(v)/ 가격(v) / 화폐단위(v)
+* / 차변,대변(v) /
+* 자재코드(v) / 적요(v) / 전기일 / 입금기한(v) / 거래선코드(v) / 삭제 플래그
+* / 생성자(v) / 생성일(v) / 생성시간(v)
+*--------------------------------------------------------------------*
+
+*  LOOP AT gt_zbbfit_aoj_i INTO gs_zbbfit_aoj_i.
+*    gs_zbbfit_aoj_i-mandt = 100.
+*    gs_zbbfit_aoj_i-fi_no = lv_zbbfit_aoj_h-fi_no.
+*    gs_zbbfit_aoj_i-fi_year = lv_zbbfit_aoj_h-fi_year.
+*    gs_zbbfit_aoj_i-fi_ln = sy-tabix.
+*
+*  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form data_changed
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> ER_DATA_CHANGED
+*&---------------------------------------------------------------------*
+FORM data_changed  USING    pr_data_changed TYPE REF TO cl_alv_changed_data_protocol
+                            p_ucomm.
+
+  DATA : ls_modi      TYPE lvc_s_modi,
+         lv_money     TYPE zbbfit_aoj_i-money,
+         lv_mat_cd    TYPE zbbmmt_mara-mat_cd,
+         lv_positions TYPE zbbfit_aoj_i-positions.
+
+  DATA : lv_temp_inv_i LIKE gs_zbbfit_aoj_i.
+
+
+  LOOP AT pr_data_changed->mt_mod_cells INTO ls_modi.
+
+    CASE ls_modi-fieldname.
+      WHEN 'MONEY'.
+        CALL METHOD pr_data_changed->get_cell_value
+          EXPORTING
+            i_row_id    = ls_modi-row_id
+            i_fieldname = ls_modi-fieldname
+          IMPORTING
+            e_value     = lv_money.
+
+        CALL METHOD pr_data_changed->modify_cell   " CELL 데이타 변경(그리드상)
+          EXPORTING
+            i_row_id    = ls_modi-row_id           " ROW ID
+            i_fieldname = ls_modi-fieldname        " 필드이름 'AMMOUNT'
+            i_value     = lv_money.
+
+      WHEN 'POSITIONS'.
+        CALL METHOD pr_data_changed->get_cell_value
+          EXPORTING
+            i_row_id    = ls_modi-row_id
+            i_fieldname = ls_modi-fieldname
+          IMPORTING
+            e_value     = lv_positions.
+
+        CALL METHOD pr_data_changed->modify_cell   " CELL 데이타 변경(그리드상)
+          EXPORTING
+            i_row_id    = ls_modi-row_id           " ROW ID
+            i_fieldname = ls_modi-fieldname        " 필드이름
+            i_value     = lv_positions.
+
+* 자재코드 validation
+      WHEN 'MAT_CD'.
+        CALL METHOD pr_data_changed->get_cell_value
+          EXPORTING
+            i_row_id    = ls_modi-row_id
+            i_fieldname = ls_modi-fieldname
+          IMPORTING
+            e_value     = LV_MAT_cD.
+
+        SELECT SINGLE mat_cd
+          FROM zbbmmt_mara
+          INTO lv_temp_inv_i-mat_cd
+          WHERE mat_cd = LV_MAT_cD.
+
+        IF sy-subrc <> 0.
+          MESSAGE s000 WITH '유효하지않은 값입니다.' DISPLAY LIKE 'E'.
+
+          CLEAR : LV_MAT_cD.
+
+          CALL METHOD pr_data_changed->modify_cell   " CELL 데이타 변경(그리드상)
+            EXPORTING
+              i_row_id    = ls_modi-row_id           " ROW ID
+              i_fieldname = ls_modi-fieldname        " 필드이름
+              i_value     = LV_MAT_cD.
+
+
+        ENDIF.
+    ENDCASE.
+
+    PERFORM focus_alv_cell.
+
+    CLEAR ls_modi-fieldname.
+
+    gv_cursor_flag = '1'.
+
+  ENDLOOP.
+
+*  CALL FUNCTION 'SAPGUI_SET_FUNCTIONCODE'        " 데이터 체인지드에서 엔터 치면 인식하는 놈 없애니까 강제 엔터 안해도 됨.
+*    EXPORTING
+*      functioncode           = 'ENTE'
+*    EXCEPTIONS
+*      function_not_supported = 1
+*      OTHERS                 = 2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sum_positions
+*&---------------------------------------------------------------------*
+*& text : 헤더에 차변과 대변의 합을 업데이트시킴
+*&---------------------------------------------------------------------*
+FORM sum_positions .
+
+  DATA : lv_credit     TYPE  zbbfit_aoj_i-money, " 차변합
+         lv_credit_tmp TYPE  zbbfit_aoj_i-money, " 임시 차변값을 저장
+         lv_debit      TYPE  zbbfit_aoj_i-money, " 대변합
+         lv_debit_tmp  TYPE  zbbfit_aoj_i-money. "임시 대변값을 저장
+
+  CLEAR : lv_credit, lv_debit, credit_input, debit_input.
+
+  " 차변의 money값들의 합을 lv_credit에 저장
+  " 헤더의 차변에 값을 setting
+  " e대변의 money값들의 합을 lv_debut에 저장
+  " 헤더의 대변에 값을 setting
+  LOOP AT gt_zbbfit_aoj_i INTO gs_zbbfit_aoj_i.
+
+    IF gs_zbbfit_aoj_i-positions = 'CRE'.
+      lv_credit_tmp = gs_zbbfit_aoj_i-money.
+
+      lv_credit = lv_credit + lv_credit_tmp.
+
+      credit_input = lv_credit.
+    ENDIF.
+
+    IF gs_zbbfit_aoj_i-positions = 'DBU'.
+      lv_debit_tmp = gs_zbbfit_aoj_i-money.
+
+      lv_debit = lv_debit + lv_debit_tmp.
+
+      debit_input = lv_debit.
+    ENDIF.
+
+  ENDLOOP.
+
+  credit_input = lv_credit.
+  debit_input = lv_debit.
+
+  balance = ( credit_input - debit_input ) * 100.
+
+  IF balance < 0.
+    balance = balance * ( -1 ).
+  ENDIF.
+
+  zbbfit_aoj_i-currency = 'KRW'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_zbbfit_item
+*&---------------------------------------------------------------------*
+*& text : 전표 item 생성
+*&---------------------------------------------------------------------*
+FORM create_zbbfit_item.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_trans_cd_searc_help
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_trans_cd_searc_help .
+
+  CLEAR : gt2_return, gt2_trans.
+
+*1. trans_cd , trans_nm 가져오기
+  SELECT sp_cd AS trans_cd,
+             sp_nm AS trans_nm
+        FROM zbbmmt_lfa1
+      UNION
+        SELECT cl_cd AS trans_cd,
+              cl_nm AS trans_nm
+        FROM zbbsdt_client
+        INTO CORRESPONDING FIELDS OF TABLE @gt2_trans.
+
+*  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+*    EXPORTING
+*      retfield        = 'TRANS_CD'
+*      dynpprog        = sy-repid
+*      dynpnr          = sy-dynnr
+*      dynprofield     = 'TRANS_CD'
+*      window_title    = '거래처정보'
+*      value_org       = 'S'
+*    TABLES
+*      value_tab       = gt2_trans
+*      return_tab      = gt2_return
+*    EXCEPTIONS
+*      parameter_error = 1
+*      no_values_found = 2
+*      OTHERS          = 3.
+*  IF sy-subrc <> 0.
+** Implement suitable error handling here
+*  ENDIF.
+
+  DATA : gs2_return LIKE LINE OF gt2_return,
+         gs2_trans  LIKE LINE OF gt2_trans.
+
+  READ TABLE gt2_return INTO gs2_return INDEX 1.
+  READ TABLE gt2_trans INTO gs2_trans WITH KEY trans_cd = gs2_return-fieldval.
+
+  code_name = gs2_trans-trans_nm.
+
+*  CALL METHOD cl_gui_cfw=>set_new_ok_code
+*    EXPORTING
+*      new_code = 'ENTER'.
+*
+*  CALL FUNCTION 'SAPGUI_SET_FUNCTIONCODE'
+*    EXPORTING
+*      functioncode           = 'ENTE'
+*    EXCEPTIONS
+*      function_not_supported = 1
+*      OTHERS                 = 2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form forced_pbo
+*&---------------------------------------------------------------------*
+*& text : 강제로 pbo를 타게함.
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM forced_pbo .
+  CALL FUNCTION 'SAPGUI_SET_FUNCTIONCODE'
+    EXPORTING
+      functioncode           = 'ENTE'
+    EXCEPTIONS
+      function_not_supported = 1
+      OTHERS                 = 2.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SETTING_HEADING_BY_SD_INV
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM setting_heading_by_sd_inv .
+
+*data :
+*
+*IF gv_by_inv_no+3(2) eq 'SD'.
+*
+*
+*
+*elseif gv_by_inv_no+3(2) eq 'MM'.
+*
+*ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fieldcat_splitter_top
+*&---------------------------------------------------------------------*
+*& text : splitter top의 fieldcat 설정
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_fieldcat_splitter_top .
+
+  DATA : pos TYPE i.
+  pos = 1.
+
+  REFRESH : gt_fieldcat_top.
+
+  CLEAR gs_fieldcat_top.
+  gs_fieldcat_top-fieldname = 'INV_NO'.
+  gs_fieldcat_top-col_pos = pos.
+  gs_fieldcat_top-coltext = '인보이스번호'.
+  gs_fieldcat_top-outputlen = 13.
+  gs_fieldcat_top-just = 'C'.
+  APPEND gs_fieldcat_top TO gt_fieldcat_top.
+
+  CLEAR gs_fieldcat_top.
+  pos = pos + 1.
+  gs_fieldcat_top-fieldname = 'TRANS_CD'.
+*  gs_fieldcat_top-fieldname = 'SP_CD'.
+  gs_fieldcat_top-col_pos = pos.
+  gs_fieldcat_top-coltext = '거래처코드'.
+  gs_fieldcat_top-outputlen = 10.
+  gs_fieldcat_top-just = 'C'.
+  APPEND gs_fieldcat_top TO gt_fieldcat_top.
+
+  CLEAR gs_fieldcat_top.
+  pos = pos + 1.
+  gs_fieldcat_top-fieldname = 'TRANS_NAME'.
+*  gs_fieldcat_top-fieldname = 'SP_CD'.
+  gs_fieldcat_top-col_pos = pos.
+  gs_fieldcat_top-coltext = '거래처이름'.
+  gs_fieldcat_top-outputlen = 10.
+  gs_fieldcat_top-just = 'C'.
+  APPEND gs_fieldcat_top TO gt_fieldcat_top.
+
+  CLEAR gs_fieldcat_top.
+  pos = pos + 1.
+  gs_fieldcat_top-fieldname = 'TOTAL'.
+  gs_fieldcat_top-col_pos = pos.
+  gs_fieldcat_top-coltext = '가격'.
+  gs_fieldcat_top-outputlen = 12.
+  gs_fieldcat_top-just = 'R'.
+  gs_fieldcat_top-cfieldname = 'CURRENCY'.
+  APPEND gs_fieldcat_top TO gt_fieldcat_top.
+
+  CLEAR gs_fieldcat_top.
+  pos = pos + 1.
+  gs_fieldcat_top-fieldname = 'CURRENCY'.
+  gs_fieldcat_top-col_pos = pos.
+  gs_fieldcat_top-coltext = '화폐단위'.
+  gs_fieldcat_top-col_opt = 'X'.
+  gs_fieldcat_top-just = 'C'.
+  APPEND gs_fieldcat_top TO gt_fieldcat_top.
+
+  CLEAR gs_fieldcat_top.
+  pos = pos + 1.
+  gs_fieldcat_top-fieldname = 'DUE_DT'.
+  gs_fieldcat_top-col_pos = pos.
+  gs_fieldcat_top-coltext = '입금기한'.
+  gs_fieldcat_top-outputlen = 12.
+  gs_fieldcat_top-just = 'C'.
+  APPEND gs_fieldcat_top TO gt_fieldcat_top.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fieldcat_splitter_bottom
+*&---------------------------------------------------------------------*
+*& text : splitter bottom의 fieldcat 설정
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_fieldcat_splitter_bottom .
+
+  DATA : pos TYPE i.
+  pos = 1.
+
+  REFRESH : gt_fieldcat_bottom.
+
+  CLEAR gs_fieldcat_bottom.
+  gs_fieldcat_bottom-fieldname = 'INV_NO'.
+  gs_fieldcat_bottom-col_pos = pos.
+  gs_fieldcat_bottom-coltext = '인보이스번호'.
+  gs_fieldcat_bottom-outputlen = 13.
+  gs_fieldcat_bottom-just = 'C'.
+  APPEND gs_fieldcat_bottom TO gt_fieldcat_bottom.
+
+  CLEAR gs_fieldcat_bottom.
+  pos = pos + 1.
+  gs_fieldcat_bottom-fieldname = 'MAT_CD'.
+  gs_fieldcat_bottom-col_pos = pos.
+  gs_fieldcat_bottom-coltext = '자재코드'.
+  gs_fieldcat_bottom-outputlen = 8.
+  gs_fieldcat_bottom-just = 'C'.
+  APPEND gs_fieldcat_bottom TO gt_fieldcat_bottom.
+
+  CLEAR gs_fieldcat_bottom.
+  pos = pos + 1.
+  gs_fieldcat_bottom-fieldname = 'MAT_TXT'.
+  gs_fieldcat_bottom-col_pos = pos.
+  gs_fieldcat_bottom-coltext = '자재이름'.
+  gs_fieldcat_bottom-outputlen = 10.
+  gs_fieldcat_bottom-just = 'C'.
+  APPEND gs_fieldcat_bottom TO gt_fieldcat_bottom.
+
+  CLEAR gs_fieldcat_bottom.
+  pos = pos + 1.
+  gs_fieldcat_bottom-fieldname = 'MAT_QT'.
+  gs_fieldcat_bottom-col_pos = pos.
+  gs_fieldcat_bottom-coltext = '자재수량'.
+  gs_fieldcat_bottom-col_opt = 'X'.
+  gs_fieldcat_bottom-just = 'C'.
+  gs_fieldcat_bottom-qfieldname = 'MAT_UNIT'.
+  APPEND gs_fieldcat_bottom TO gt_fieldcat_bottom.
+
+  CLEAR gs_fieldcat_bottom.
+  pos = pos + 1.
+  gs_fieldcat_bottom-fieldname = 'MAT_UNIT'.
+  gs_fieldcat_bottom-col_pos = pos.
+  gs_fieldcat_bottom-coltext = '자재단위'.
+  gs_fieldcat_bottom-col_opt = 'X'.
+  gs_fieldcat_bottom-just = 'C'.
+  APPEND gs_fieldcat_bottom TO gt_fieldcat_bottom.
+
+  CLEAR gs_fieldcat_bottom.
+  pos = pos + 1.
+  gs_fieldcat_bottom-fieldname = 'PER_CO'.
+  gs_fieldcat_bottom-col_pos = pos.
+  gs_fieldcat_bottom-coltext = '자재단가'.
+*  gs_fieldcat_bottom-col_opt = 'X'.
+  gs_fieldcat_bottom-outputlen = 10.
+  gs_fieldcat_bottom-just = 'R'.
+  gs_fieldcat_bottom-cfieldname = 'CURRENCY'.
+  APPEND gs_fieldcat_bottom TO gt_fieldcat_bottom.
+
+  CLEAR gs_fieldcat_bottom.
+  pos = pos + 1.
+  gs_fieldcat_bottom-fieldname = 'CURRENCY'.
+  gs_fieldcat_bottom-col_pos = pos.
+  gs_fieldcat_bottom-coltext = '화폐단위'.
+  gs_fieldcat_bottom-col_opt = 'X'.
+  gs_fieldcat_bottom-just = 'C'.
+  APPEND gs_fieldcat_bottom TO gt_fieldcat_bottom.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_inv_header
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_inv_header .
+
+  REFRESH : gt_inv_h.
+
+  " 세탁(SD)의 인보이스 헤더 정보
+  IF zbbfit_aoj_h-inv_no+3(2) = 'SD'.
+
+    SELECT SINGLE inv_no,
+           cl_cd,
+           total,
+           currency,
+           pay_due_dt
+      FROM zbbsdt_invo_h
+      INTO ( @gs_inv_h-inv_no,
+             @gs_inv_h-trans_cd,
+             @gs_inv_h-total,
+             @gs_inv_h-currency,
+             @gs_inv_h-due_dt )
+      WHERE inv_no = @zbbfit_aoj_h-inv_no.
+
+    IF gs_inv_h IS NOT INITIAL.
+      APPEND gs_inv_h TO gt_inv_h.
+    ENDIF.
+
+    "전표헤더에 입금기한,거래처코드 setting.
+
+    PERFORM set_code_name.
+
+
+    "구매(MM)의 인보이스 헤더 정보
+  ELSEIF zbbfit_aoj_h-inv_no+3(2) = 'MM'.
+    SELECT SINGLE inv_no,
+           sp_cd,
+           total,
+           currency,
+           due_dt
+      FROM zbbmmt_invo_h
+      INTO ( @gs_inv_h-inv_no,
+             @gs_inv_h-trans_cd,
+             @gs_inv_h-total,
+             @gs_inv_h-currency,
+             @gs_inv_h-due_dt )
+      WHERE inv_no = @zbbfit_aoj_h-inv_no.
+
+    IF gs_inv_h IS NOT INITIAL.
+      APPEND gs_inv_h TO gt_inv_h.
+    ENDIF.
+
+*    "전표헤더에 입금기한,거래처코드 setting.
+*    zbbfit_aoj_h-deadline = gs_inv_h-due_dt.
+*    zbbfit_aoj_h-trans_cd = gs_inv_h-trans_cd.
+
+    PERFORM set_code_name.
+
+  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_inv_bottom
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_inv_bottom .
+
+  " 세탁(SD)의 인보이스 ITEM정보를 가져옴.
+  IF zbbfit_aoj_h-inv_no+3(2) = 'SD'.
+
+    REFRESH : gt_sdt_inv_i.
+
+    SELECT inv_no,
+           ld_cd,
+           qt,
+           unit,
+           unit_price,
+           currency
+      FROM zbbsdt_invo_i
+      INTO ( @gs_sdt_inv_i-inv_no,
+             @gs_sdt_inv_i-mat_cd,
+             @gs_sdt_inv_i-mat_qt,
+             @gs_sdt_inv_i-mat_unit,
+             @gs_sdt_inv_i-per_co,
+             @gs_sdt_inv_i-currency )
+      WHERE inv_no = @zbbfit_aoj_h-inv_no.
+
+
+**********************************************************************
+* 세탁물 이름
+      SELECT SINGLE ld_nm
+        FROM zbbppt_laundry
+        INTO gs_sdt_inv_i-mat_txt
+        WHERE ld_cd = gs_sdt_inv_i-mat_cd.
+**********************************************************************
+
+      APPEND gs_sdt_inv_i TO gt_sdt_inv_i.
+    ENDSELECT.
+  ELSEIF zbbfit_aoj_h-inv_no+3(2) = 'MM'. " 구매(MM)의 인보이스 ITEM정보를 가져옴.
+
+    REFRESH : gt_mmt_inv_i.
+
+    SELECT inv_no,
+        mat_cd,
+        mat_qt,
+        mat_unit,
+        per_co,
+        currency
+   FROM zbbmmt_invo_i
+   INTO ( @gs_mmt_inv_i-inv_no,
+          @gs_mmt_inv_i-mat_cd,
+          @gs_mmt_inv_i-mat_qt,
+          @gs_mmt_inv_i-mat_unit,
+          @gs_mmt_inv_i-per_co,
+          @gs_mmt_inv_i-currency )
+   WHERE inv_no = @zbbfit_aoj_h-inv_no.
+
+**********************************************************************
+* 세탁물 이름
+      SELECT SINGLE mat_nm
+        FROM zbbmmt_mara
+        INTO gs_mmt_inv_i-mat_txt
+        WHERE mat_cd = gs_mmt_inv_i-mat_cd.
+**********************************************************************
+
+      APPEND gs_mmt_inv_i TO gt_mmt_inv_i.
+    ENDSELECT.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_splitter_layo
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_splitter_layo .
+  gs_splitter_top_layo-grid_title = '인보이스 정보'.
+  gs_splitter_top_layo-smalltitle = 'X'.
+  gs_splitter_bottom_layo-grid_title = '인보이스 상세내역'.
+  gs_splitter_bottom_layo-smalltitle = 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_code_name
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_code_name .
+
+*  *1. trans_cd , trans_nm 가져오기
+  SELECT sp_cd AS trans_cd,
+       sp_nm AS trans_nm
+  FROM zbbmmt_lfa1
+UNION
+  SELECT cl_cd AS trans_cd,
+        cl_nm AS trans_nm
+  FROM zbbsdt_client
+  INTO CORRESPONDING FIELDS OF TABLE @gt2_trans.
+
+  SORT gt2_trans BY trans_cd.
+
+  READ TABLE gt2_trans WITH KEY trans_cd = zbbfit_aoj_h-trans_cd .
+
+  code_name = gt2_trans-trans_nm.
+
+  zbbfit_aoj_h-deadline = gs_inv_h-due_dt.
+  zbbfit_aoj_h-trans_cd = gs_inv_h-trans_cd.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form focus_alv_cell
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM focus_alv_cell .
+
+  DATA : l_row   TYPE i,
+         l_value TYPE c,
+         l_col   TYPE i,
+         ls_row  TYPE lvc_s_row,
+         ls_col  TYPE lvc_s_col,
+         ls_roid TYPE lvc_s_roid.
+
+  CALL METHOD go_alv_grid->get_current_cell
+    IMPORTING
+      e_row     = l_row
+      e_value   = l_value
+      e_col     = l_col
+      es_row_id = ls_row
+      es_col_id = ls_col
+      es_row_no = ls_roid.
+
+  gv_row = l_row.
+  gv_value = l_value.
+  gv_col = l_col.
+  gs_row = ls_row.
+  gs_col = ls_col.
+  gs_roid = ls_roid.
+
+  CALL METHOD cl_gui_control=>set_focus
+    EXPORTING
+      control = go_alv_grid.
+
+  CALL METHOD go_alv_grid->set_current_cell_via_id
+    EXPORTING
+      is_row_id    = ls_row
+      is_column_id = ls_col.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_inv_no
+*&---------------------------------------------------------------------*
+*& text : 전표헤더의 인보이스번호 유효성 체크
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_inv_no .
+
+  DATA : lt_value LIKE TABLE OF gs_value,
+         ls_value LIKE gs_value.
+
+  SELECT inv_no
+    FROM zbbsdt_invo_h
+  UNION
+  SELECT inv_no
+    FROM zbbmmt_invo_h
+    INTO CORRESPONDING FIELDS OF TABLE @lt_value.
+
+  IF zbbfit_aoj_h-inv_no IS NOT INITIAL.
+    READ TABLE lt_value INTO ls_value WITH KEY inv_no = zbbfit_aoj_h-inv_no.
+
+    IF sy-subrc = 4.
+      CLEAR zbbfit_aoj_h-inv_no.
+      MESSAGE s000 WITH '유효하지 않는 인보이스번호입니다.' DISPLAY LIKE 'E'.
+    ENDIF.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form add_two_line
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM add_two_line .
+
+  IF lines( gt_zbbfit_aoj_i ) <> 2.
+    DO 2 TIMES.
+      CLEAR : gs_zbbfit_aoj_i.
+      gs_zbbfit_aoj_i-currency = 'KRW'.
+      APPEND gs_zbbfit_aoj_i TO gt_zbbfit_aoj_i.
+    ENDDO.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form go_alv_grid_exclude_func
+*&---------------------------------------------------------------------*
+*& text : go_alv_grid의 function code 삭제
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM go_alv_grid_exclude_func .
+
+  ls_exclude = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+  APPEND ls_exclude TO gt_exclude.
+
+  ls_exclude = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+  APPEND ls_exclude TO gt_exclude.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form add_text_bun_and_account
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM add_text_bun_and_account .
+
+  LOOP AT gt_zbbfit_aoj_i INTO gs_zbbfit_aoj_i.
+    IF gs_zbbfit_aoj_i-positions IS NOT INITIAL.
+*       차변 / 대변 텍스트
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname      = 'ZBBD_POSITION'
+          iv_value        = gs_zbbfit_aoj_i-positions
+        IMPORTING
+          ev_value_text   = gs_zbbfit_aoj_i-bun_name
+        EXCEPTIONS
+          value_not_found = 10.
+
+      IF sy-subrc = 10.
+        MESSAGE s000 WITH '유효하지 않은 값입니다.' DISPLAY LIKE 'E'.
+      ENDIF.
+
+    ENDIF.
+
+    IF gs_zbbfit_aoj_i-account_no IS NOT INITIAL.
+*       계정번호 텍스트
+      CALL FUNCTION 'STF4_GET_DOMAIN_VALUE_TEXT'
+        EXPORTING
+          iv_domname      = 'ZBBD_ACCOUNT_NO'
+          iv_value        = gs_zbbfit_aoj_i-account_no
+        IMPORTING
+          ev_value_text   = gs_zbbfit_aoj_i-account_name
+        EXCEPTIONS
+          value_not_found = 10.
+
+      IF sy-subrc = 10.
+        MESSAGE s000 WITH '유효하지 않은 값입니다.' DISPLAY LIKE 'E'.
+      ENDIF.
+    ENDIF.
+
+    MODIFY gt_zbbfit_aoj_i FROM gs_zbbfit_aoj_i INDEX sy-tabix TRANSPORTING bun_name account_name.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form move_to_zbbfi2010
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM move_to_zbbfi2010 .
+
+  DATA : lv_message TYPE c LENGTH 40,
+         lv_chk.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '프로그램 이동'
+      text_question         = '''전표조회(다수건)'' 프로그램으로 이동하시겠습니까?'
+      icon_button_1         = 'ICON_CHECKED'
+      text_button_1         = '예'
+      icon_button_2         = 'ICON_CANCEL'
+      text_button_2         = '아니오'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = lv_chk.
+
+  IF lv_chk = '1'.
+    gv_move_to_list = '1'.
+    SET PARAMETER ID 'MTL' FIELD gv_move_to_list. " 전표생성에서 전표조회(다수건)으로 이동시 구분할 변수
+    CALL TRANSACTION 'ZBBFI2010'.
+  ELSE.
+    MESSAGE s000 WITH '작업이 취소되었습니다.' DISPLAY LIKE 'W'.
+  ENDIF.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

@@ -1,0 +1,16 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2010_SCR
+*&---------------------------------------------------------------------*
+
+SELECT-OPTIONS: pa_fino FOR zbbfit_aoj_h-fi_no,
+             pa_year FOR zbbfit_aoj_h-fi_year.
+
+SELECTION-SCREEN: SKIP 1.
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001.
+  SELECT-OPTIONS : pa_type FOR zbbfit_aoj_h-fi_style,
+                   pa_post FOR zbbfit_aoj_h-fi_post_date.
+SELECTION-SCREEN END OF BLOCK b1.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

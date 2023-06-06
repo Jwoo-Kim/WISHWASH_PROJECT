@@ -1,0 +1,37 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2020_S01
+*&---------------------------------------------------------------------*
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001.
+  SELECT-OPTIONS : so_day FOR zbbfit_aoj_i-fi_year.
+  PARAMETERS : pa_fino TYPE zbbfit_aoj_h-fi_no MATCHCODE OBJECT zsearch_fi_no.
+  SELECTION-SCREEN SKIP 1.
+
+  SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME TITLE TEXT-002.
+    SELECTION-SCREEN BEGIN OF LINE.
+      SELECTION-SCREEN POSITION 5.
+      PARAMETERS : pa_all RADIOBUTTON GROUP gb1 USER-COMMAND all DEFAULT 'X'. "전체
+      SELECTION-SCREEN COMMENT (20) FOR FIELD pa_all.
+
+      PARAMETERS : pa_in  RADIOBUTTON GROUP gb1. " 매입
+      SELECTION-SCREEN COMMENT (20) FOR FIELD pa_in.
+
+      PARAMETERS : pa_ex RADIOBUTTON GROUP gb1. " 매출
+      SELECTION-SCREEN COMMENT (20) FOR FIELD pa_ex.
+
+    SELECTION-SCREEN END OF LINE.
+
+  SELECTION-SCREEN END OF BLOCK b2.
+  PARAMETERS : pa_cl(10) AS LISTBOX VISIBLE LENGTH 20 MODIF ID cli DEFAULT '', "고객처
+               pa_sp(10) AS LISTBOX VISIBLE LENGTH 20 MODIF ID sup DEFAULT ''. "구매처
+
+  SELECTION-SCREEN : SKIP 1.
+
+*  SELECTION-SCREEN BEGIN OF LINE.
+*    SELECTION-SCREEN POSITION 79.
+*    SELECTION-SCREEN PUSHBUTTON 79(70) btn_text USER-COMMAND btn1 VISIBLE LENGTH 12.
+*  SELECTION-SCREEN END OF LINE.
+SELECTION-SCREEN END OF BLOCK b1.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

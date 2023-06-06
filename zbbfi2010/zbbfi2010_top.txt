@@ -1,0 +1,55 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2010_TOP
+*&---------------------------------------------------------------------*
+TYPE-POOLS : col.
+
+TABLES : zbbfit_aoj_h, zbbfit_aoj_i.
+
+DATA : go_container TYPE REF TO cl_gui_custom_container
+       , go_alv_grid TYPE REF TO cl_gui_alv_grid.
+
+DATA : BEGIN OF gs_zbbfit_aoj_h.
+         INCLUDE TYPE zbbfit_aoj_h.
+DATA : fi_style_name TYPE dd07t-ddtext,
+       END OF gs_zbbfit_aoj_h,
+       gt_zbbfit_aoj_h LIKE TABLE OF gs_zbbfit_aoj_h.
+
+*DATA :  gs_zbbfit_aoj_h TYPE zbbfit_aoj_h
+*        , gt_zbbfit_aoj_h TYPE TABLE OF zbbfit_aoj_h.
+
+DATA : ok_code TYPE sy-ucomm.
+
+DATA : gs_fieldcat TYPE lvc_s_fcat,
+       gt_fieldcat TYPE lvc_t_fcat.
+
+DATA : gs_layout TYPE lvc_s_layo,
+       gs_item_layout type lvc_s_layo.
+
+DATA : gv_flag TYPE c.
+DATA : gv_cursor TYPE brf_cursor_field. " CURSOR
+DATA : gv_move_to_list(1) TYPE c VALUE '0'. " 전표생성으로부터 조회로 넘어왔는지 확인하는 변수
+
+DATA : go_scr200_container TYPE REF TO cl_gui_custom_container,
+       go_scr200_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+DATA : BEGIN OF gs_scr200_item.
+         INCLUDE TYPE zbbfit_aoj_i.
+DATA :   color        TYPE c LENGTH 4, " 신호등 변수
+         bun_name     TYPE dd07t-ddtext, " 차변/대변 텍스트
+         account_name TYPE dd07t-ddtext, " 계정번호 텍스트
+       END OF gs_scr200_item,
+       gt_scr200_item LIKE TABLE OF gs_scr200_item.
+
+DATA : gubun  TYPE dd07t-ddtext,
+       yuhung TYPE dd07t-ddtext.
+
+DATA : gs_scr200_fieldcat TYPE lvc_s_fcat,
+       gt_scr200_fieldcat TYPE lvc_t_fcat.
+
+DATA : gs_sort TYPE lvc_s_sort, " Sort
+       gt_sort TYPE lvc_t_sort.
+
+data : gs_layout_scr_200 type lvc_s_layo.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754

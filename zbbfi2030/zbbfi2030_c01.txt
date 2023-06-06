@@ -1,0 +1,96 @@
+*&---------------------------------------------------------------------*
+*& Include          ZBBFI2030_C01
+*&---------------------------------------------------------------------*
+
+CLASS : lcl_handler DEFINITION.
+
+  PUBLIC SECTION.
+    CLASS-METHODS:
+
+      on_toolbar_scr_100 FOR EVENT toolbar
+        OF cl_gui_alv_grid
+        IMPORTING e_object ,
+      on_user_command_scr_100 FOR EVENT user_command
+        OF cl_gui_alv_grid
+        IMPORTING e_ucomm,
+      on_data_changed FOR EVENT data_changed
+      OF cl_gui_alv_grid IMPORTING er_data_changed e_ucomm.
+*    METHODS :
+*      handle_on_f4
+*        FOR EVENT onf4 OF cl_gui_alv_grid
+*        IMPORTING sender
+*                  e_fieldname
+*                  e_fieldvalue
+*                  es_row_no
+*                  er_event_data
+*                  et_bad_cells
+*                  e_display.
+
+ENDCLASS.
+
+CLASS: lcl_handler IMPLEMENTATION.
+
+  METHOD on_toolbar_scr_100.
+    PERFORM on_toolbar_scr_100 USING e_object.
+  ENDMETHOD.
+
+  METHOD on_user_command_scr_100.
+    PERFORM on_user_command_scr_100 USING e_ucomm.
+  ENDMETHOD.
+
+  METHOD on_data_changed.
+    PERFORM data_changed USING er_data_changed
+                                  e_ucomm.
+*     PERFORM sum_positions.
+  ENDMETHOD.
+
+
+*  METHOD handle_on_f4.
+*    PERFORM on_f4 USING sender
+*                 e_fieldname
+*                 e_fieldvalue
+*                 es_row_no
+*                 er_event_data
+*                 et_bad_cells
+*                 e_display.
+
+*ENDMETHOD.
+ENDCLASS.
+
+CLASS : lcl_receiver DEFINITION.
+
+  PUBLIC SECTION.
+
+    METHODS :
+      handle_on_f4
+        FOR EVENT onf4 OF cl_gui_alv_grid
+        IMPORTING sender
+                  e_fieldname
+                  e_fieldvalue
+                  es_row_no
+                  er_event_data
+                  et_bad_cells
+                  e_display.
+
+ENDCLASS.
+
+DATA : grf_event_receiver TYPE REF TO lcl_receiver.
+
+CLASS : lcl_receiver IMPLEMENTATION.
+
+* onf4
+  METHOD handle_on_f4.
+    PERFORM on_f4 USING sender
+                 e_fieldname
+                 e_fieldvalue
+                 es_row_no
+                 er_event_data
+                 et_bad_cells
+                 e_display.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2023. Sap Release 754
