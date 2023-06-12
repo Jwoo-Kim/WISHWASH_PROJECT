@@ -45,5 +45,6 @@
       	( 빨강 : 입금기한 지남 / 갈색 : 입금기한 7일 이내 / 초록 : 입금기한 7일 이상 / 
       	파랑 : 반제전표 )
 
-  
+### 포트폴리오 PDF 링크 :
+- https://github.com/Jwoo-Kim/WISHWASH_PROJECT/blob/main/WISHWASH%20%ED%8F%AC%ED%8A%B8%ED%8F%B4%EB%A6%AC%EC%98%A4(%EA%B9%80%EC%A7%84%EC%9A%B0).pdf
  
