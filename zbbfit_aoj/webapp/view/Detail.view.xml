@@ -1,0 +1,322 @@
+<mvc:View
+	controllerName="sap.btp.zbbfitaoj.controller.Detail"
+	xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns:table="sap.ui.table"
+    xmlns:form="sap.ui.layout.form"
+    xmlns:f="sap.f"
+    xmlns:vm="sap.ui.comp.variants"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <f:DynamicPage id="dynamicPageId" 
+                    headerExpanded="{/headerExpanded}"
+                    toggleHeaderOnTitleClick="{/titleClickable}" 
+                    showFooter="true" 
+                    backgroundDesign="List"
+					>
+        <!-- DynamicPage Title -->
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <vm:VariantManagement standardItemText="전표번호: {detail>/FiNo}">
+                    </vm:VariantManagement>
+                    <!-- <Title text="Information - InvNo : {header>/InvNo}"/> -->
+                </f:heading>
+
+                <f:content>
+                </f:content>
+
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <!-- DynamicPage Header -->
+        <f:header>
+            <f:DynamicPageHeader pinnable="false">
+                <form:Form editable="true">
+                    <!-- <form:title>
+                        <core:Title text="Information - InvNo : {header>/InvNo}" />
+                    </form:title> -->
+
+                    <form:layout>
+                        <form:ResponsiveGridLayout labelSpanXL="4" 
+                                                    labelSpanL="4" 
+                                                    labelSpanM="4" 
+                                                    labelSpanS="4" 
+                                                    adjustLabelSpan="false" 
+                                                    emptySpanXL="0" 
+                                                    emptySpanL="0" 
+                                                    emptySpanM="0" 
+                                                    emptySpanS="0" 
+                                                    columnsXL="2" 
+                                                    columnsL="2" 
+                                                    columnsM="1" 
+                                                    singleContainerFullSize="false" />
+                    </form:layout>
+                    <form:formContainers>
+                        <form:FormContainer>
+                            <form:formElements>
+
+                                <form:FormElement label="전표번호">
+                                    <form:fields>
+                                        <Text id="FiNo" text="{detail>/FiNo}"/>
+                                    </form:fields>
+                                </form:FormElement>
+
+                                <form:FormElement label="구분">
+                                    <form:fields>
+                                        <Text text="{detail>/State}"/>
+                                        <Text text = "{= ${detail>/State} === 'IN' ? '매입'
+                            :  ${State} === 'EX' ? '매출'
+                            :  ${State} === 'PIN' ? '외상매입금반제' 
+                            :  '외상매출금반제' 
+                            }" />
+                                    </form:fields>
+                                </form:FormElement>
+
+                                <form:FormElement label="전표유형">
+                                    <form:fields>
+                                        <Text text="{detail>/FiStyle}"/>
+                                        <Text text="{= ${detail>/FiStyle} === 'GE' ? '일반전표' : '반제전표'}" />
+                                        <!-- <Text text= "{= ${FiStyle} === 'GE' ? '일반전표' : '반제전표'}"  /> -->
+                                    </form:fields>
+                                </form:FormElement>
+
+                                <form:FormElement label="전기일">
+                                    <form:fields>
+                                        <Text text="{
+                                            path : 'detail>/FiPostDate',
+                                            formatter: '.formatDate'
+                                            }"/>
+                                    </form:fields>
+                                </form:FormElement>
+
+                            </form:formElements>
+                        </form:FormContainer>
+                        <form:FormContainer>
+                            <form:formElements>
+
+                                <!-- <form:FormElement label="거래처코드">
+                                    <form:fields>
+                                         <Text text="{
+                                             parts: ['header>/Total', 'header>/Currency'], 
+                                                type:'sap.ui.model.type.Currency',
+                                                formatOptions: {showMeasure: false}}"/>
+                                    </form:fields>
+                                </form:FormElement> -->
+
+								<form:FormElement label="거래처코드">
+                                    <form:fields>
+                                        <Text text="{detail>/TransCd}"/>
+                                        <Text text="{detail>/TransNm}"/>
+                                    </form:fields>
+                                </form:FormElement>
+
+                                <!-- <form:FormElement label="거래처명">
+                                    <form:fields>
+                                        <Text text="{TransNm}"/>
+                                    </form:fields>
+                                </form:FormElement> -->
+
+                                <form:FormElement label="인보이스번호">
+                                    <form:fields>
+                                       <Text text="{detail>/InvNo}" />
+                                    </form:fields>
+                                </form:FormElement>
+
+								<form:FormElement label="입금기한">
+                                    <form:fields>
+                                        <Text text="{
+                                           path : 'detail>/Deadline',
+                                           formatter: '.formatDate'
+                                           }"/>
+                                    </form:fields>
+                                </form:FormElement>
+
+                                <form:FormElement label="적요">
+                                    <form:fields>
+                                        <!-- <Text text="{Detail}" visible="{= !${view>/editMode}}"/> -->
+                                        <Input id = "Detail" value="{
+                                            path: 'detail>/Detail'
+                                        }" editable="{= ${view>/editMode}}"/>
+                                    </form:fields>
+                                </form:FormElement>
+
+                            </form:formElements>
+                        </form:FormContainer>
+                    </form:formContainers>
+                </form:Form>
+            </f:DynamicPageHeader>
+
+        </f:header>
+
+         <!-- <OverflowToolbar>
+			<Title text="세탁물 주문 상세 내역"/>
+	    </OverflowToolbar>  -->
+
+        <f:content>    
+            <table:Table id="DetailTable" rows="{items}" selectionMode="None">
+                <table:columns>
+
+                    <!-- <infoToolbar>
+                        <OverflowToolbar>
+                            <Label text="고객별 세탁물 주문 현황"/>
+                        </OverflowToolbar>
+                    </infoToolbar> -->
+
+                    <table:Column   hAlign="Center"
+                                    visible="true">
+                                <Label text="전표번호"></Label>
+                                    <table:template>
+                                    <Text text="{FiNo}"/>
+                                </table:template>
+                    </table:Column>
+        
+                    <table:Column  hAlign="Center">
+                                <Label text="전표라인"></Label>
+                                    <table:template>
+                                        <Text text="{FiLn}"/>
+                                    </table:template>
+                            </table:Column>
+
+                   
+                     <table:Column  hAlign="Center">
+                                <Label text="차변/대변"></Label>
+                                    <table:template>
+                                        <Text text="{Positions}"/>
+                                    </table:template>
+                            </table:Column>
+
+                    <table:Column  hAlign="Center">
+                                <Label text="분개"></Label>
+                                    <table:template>
+                                        <Text text="{= ${Positions} === 'CRE' ? '차변' : '대변'}"/>
+                                    </table:template>
+                    </table:Column>
+                    
+                    <table:Column   hAlign="Center">
+                                <Label text="계정번호"></Label>
+                                    <table:template>
+                                        <Text text="{AccountNo}"/>
+                                    </table:template>
+                            </table:Column>
+
+                    <table:Column   hAlign="Center">
+                        <Label text="계정이름"></Label>
+                            <table:template>
+                            <Text text = "{= ${AccountNo} === '100' ? '원재료구입'
+                            :  ${AccountNo} === '200' ? '외상매입금'
+                            :  ${AccountNo} === '210' ? '매입채무' 
+                            :  ${AccountNo} === '300' ? '매출채권' 
+                            :  ${AccountNo} === '310' ? '매출액'
+                            :  ${AccountNo} === '400' ? '현금'
+                            :  ${AccountNo} === '500' ? '제품(세탁물)'
+                            :  ${AccountNo} === '220' ? '매출원가'
+                            : '재고'
+                            }"/>
+                            </table:template>
+                    </table:Column>
+
+                     <table:Column   hAlign="End">
+                        <Label text="가격"></Label>
+                            <table:template>
+                                <Text text="{Money}"/>
+                            </table:template>
+                    </table:Column>
+                  
+                    <table:Column hAlign="Center" width="80px">
+                                <Label text="화폐단위"></Label>
+                                    <table:template>
+                                        <Text text="{Currency}"/>
+                                    </table:template>
+                            </table:Column>
+                       </table:columns>
+                       
+                        <table:rowSettingsTemplate>
+                            <!-- <table:RowSettings highlight= "{= ${date>/today} > Deadline ? : 'Warning' : 'Information'}" /> -->
+                            <table:RowSettings highlight="{ 
+                                parts: [
+                                    { path: 'detail>/FiStyle' },
+                                    { path: 'detail>/Deadline' }
+                                ],
+                                formatter: '.customColor'
+                             }" />
+                        </table:rowSettingsTemplate>
+
+<!-- {= 
+                            ( ${detail>/FiStyle} === 'PO' ) ? 'Information' : 
+                            ( ( ${date>/today} - ${detail>/Deadline} ) > 0 ) ? 'Error' :
+                            ( ( ${detail>/Deadline} - ${date>/today} ) > 0 ) ? 'Success' : 
+                            ( ( ${detail>/Deadline} - ${date>/today} )  3062976849 ) ? 'Warnning' :
+                            'None' } -->
+
+                        <!-- <table:rowSettingsTemplate>
+                            <table:RowSettings highlight="{= 
+                                ( ${table>FiStyle} === 'RE' ) ? 'Error' : 
+                                ( ${table>FiStyle} === 'PO' ) ? 'Information'
+                                : 'Success' 
+                            }" />
+                        </table:rowSettingsTemplate> -->
+            </table:Table>
+        </f:content>
+        <f:footer>
+            <OverflowToolbar >
+                <HBox
+                    width="100px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                         src="sap-icon://circle-task-2"
+                        color="red">
+                        
+                    </core:Icon>
+
+                    <Text text="입금기한지남"></Text>
+                </HBox> 
+
+                <HBox
+                    width="130px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                         src="sap-icon://circle-task-2"
+                        color="#E76500">
+                        
+                    </core:Icon>
+
+                    <Text text="입금기한 7일 이내"></Text>
+                </HBox> 
+
+                <HBox
+                    width="130px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                         src="sap-icon://circle-task-2"
+                        color="green">
+                        
+                    </core:Icon>
+
+                    <Text text="입금기한 7일 이상"></Text>
+                </HBox> 
+
+                <HBox
+                    width="70px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                        src="sap-icon://circle-task-2"
+                        color="blue">
+                        
+                    </core:Icon>
+
+                    <Text text="반제전표"></Text>
+                </HBox> 
+
+                <ToolbarSpacer ></ToolbarSpacer>
+                <Button type = "Accept" text="수정" visible="{= !${view>/editMode}}" 
+                press="onEdit" />    
+                <Button type = "Accept" text="저장" visible="{= ${view>/editMode}}"
+                press="onSave" />
+            </OverflowToolbar>
+        </f:footer>
+    </f:DynamicPage>
+</mvc:View>

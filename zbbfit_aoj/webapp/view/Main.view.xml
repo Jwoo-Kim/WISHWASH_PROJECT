@@ -1,0 +1,318 @@
+<mvc:View 
+    xmlns:filterbar="sap.ui.comp.filterbar" controllerName="sap.btp.zbbfitaoj.controller.Main"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:fb="sap.ui.comp.filterbar"
+    xmlns:core="sap.ui.core"
+    xmlns:vm="sap.ui.comp.variants"
+    xmlns:table="sap.ui.table">
+    <!-- <Page showHeader="false"> -->
+    <f:DynamicPage id="dynamicPageId" showFooter="true">
+			<!-- DynamicPage Title -->
+			<f:title>
+				<f:DynamicPageTitle>
+					<f:heading>
+						<vm:VariantManagement standardItemText="전표 역분개 및 수정 프로그램">
+						</vm:VariantManagement>
+					</f:heading>
+					<f:actions>
+                    <!-- 버튼제거함 -->
+					</f:actions>
+				</f:DynamicPageTitle>
+			</f:title>
+        <f:header>
+            <f:DynamicPageHeader pinnable="true">
+                <fb:FilterBar id="filterbar" showFilterConfiguration="false" reset="onReset" search="onSearch"  useToolbar="false" showGoOnFB="true">
+                        <fb:filterItems>
+
+                        <fb:FilterItem name="FiStyle" label="전표유형">
+                            <fb:control>
+                                <ComboBox
+                                    id="FiStyle"
+                                    showSecondaryValues="true"
+                                    selectedKey="{
+                                        path: 'search>/FiStyle',    
+                                        type: 'sap.ui.model.odata.type.String'
+                                    }"
+                                    change="onValidationComoboBoxChange"
+                                    name="FiStyle"
+                                    placeholder="전체검색"
+                                    items="{
+                                        path: '/fiStyleSet', 
+                                        templateShareable: true
+                                    }"
+                                >
+                                    <!-- <core:Item key="{FiStyle}" text="{FiStyle}"/> -->
+                                    <core:ListItem 
+                                        key="{FiStyle}" 
+                                        text="{FiStyle}"  
+                                        additionalText="{= 
+                                            ${FiStyle} === 'GE' ? '일반전표' 
+                                            : ${FiStyle} === 'PO'? '반제전표'
+                                            : '역분개전표'
+                                        }"/>
+                                </ComboBox>
+                            </fb:control>
+                        </fb:FilterItem>
+
+                        <fb:FilterItem name="FiYear" label="회계연도">
+                            <fb:control>
+                                <ComboBox id="cbFiYear"
+                                    selectedKey="{search>/FiYear}"
+                                    name="FiYear"
+                                    placeholder="전체검색"
+                                    items="{
+                                        path: '/fiYearSet',
+                                        templateShareable: true
+                                    }"
+                                    change="onValidationComoboBoxChange"
+                                >
+                                    <core:Item key="{FiYear}" text="{FiYear}"/>
+                                </ComboBox>
+                            </fb:control>
+                        </fb:FilterItem>
+
+                        <fb:FilterItem name="FiNo" label="전표번호">
+                            <fb:control>
+                                <Input 
+                                id="FiNoInput"
+                                value="{search>/FiNo}" 
+                                valueState="{inputState>/state}"
+                                placeholder="전표번호 10자리를 입력해주세요"
+                                maxLength="10"
+                                change="onInputChange"></Input>
+                            </fb:control>				
+                        </fb:FilterItem>
+
+                        <fb:FilterItem name="FiPostDateFromTo" label="전기일">
+                            <fb:control>
+                                <!-- <HBox>
+                                    <DatePicker 
+                                    id="FiPostDateFrom"
+                                    dateValue="{
+                                        path: 'search>/FiPostDateFrom'
+                                    }" 
+                                        change='onChangeDate' />
+                                    <Text text="~"></Text>
+                                    <DatePicker
+                                    id="FiPostDateTo" 
+                                    dateValue="{
+                                        path: 'search>/FiPostDateTo'
+                                    }"
+                                        change="onChangeDate" />    
+                                </HBox>                                 -->
+                                <DateRangeSelection id="DateRange" name="PpDt" change='.onChangeDate' value= "{
+                                    'type': 'sap.ui.model.type.DateInterval',
+                                    'formatOptions': {
+                                        'pattern': 'yyyy/MM/dd'
+                                    },
+                                    'parts': [
+                                        {
+                                            'type': 'sap.ui.model.type.Date',
+                                            'path': 'search>/FiPostDateFrom'
+                                        },
+                                        {
+                                            'type': 'sap.ui.model.type.Date',
+                                            'path': 'search>/FiPostDateTo'
+                                        }
+                                    ]
+                                }"/>
+                                </fb:control>				
+                        </fb:FilterItem>
+                        </fb:filterItems>
+                    </fb:FilterBar>
+            </f:DynamicPageHeader>
+        </f:header>
+        <f:content>
+            <!-- <Title class = "sapUiLargeMarginBegin sapUiSmallMarginTop"
+                text = "전표 역분개 및 수정 프로그램"
+                titleStyle = "H4"
+                /> -->
+            <table:Table rows="{table>/}"
+                rowActionCount="1"
+                id="table"
+                selectionMode="{inputState>/selectionMode}"
+                visibleRowCount="13">
+                <table:extension>
+                    <!-- <HBox >
+                        
+                    </HBox> -->
+                </table:extension>
+                <table:columns>
+                    <table:Column hAlign="Center">
+                        <Label text="전표번호"></Label>
+                        <table:template>
+                            <Text text="{table>FiNo}"></Text>
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column hAlign="Center">
+                        <Label text="회계연도"></Label>
+                        <table:template>
+                            <Text text="{table>FiYear}"></Text>
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column hAlign="Center">
+                        <Label text="전표유형"></Label>
+                        <table:template>
+                            <Text text="{table>FiStyle}">
+                            <customData>
+                                <core:CustomData 
+                                    key="mydata" 
+                                    value="{= 
+                                        ${table>FiStyle} === 'GE' ?
+                                        'blue' : 'red'
+                                    }" 
+                                    writeToDom="true">
+                                </core:CustomData>
+                            </customData>
+                            </Text>
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column hAlign="Center">
+                        <Label text="유형이름"></Label>
+                        <table:template>
+                            <Text text= "{= ${table>FiStyle} === 'GE' ? '일반전표' 
+                            : ${table>FiStyle} === 'PO' ? '반제전표'
+                            : '역분개전표' }"
+                            >
+
+                                <customData>
+                                    <core:CustomData 
+                                        key="mydata" 
+                                        value="{= 
+                                            ${table>FiStyle} === 'GE' ?
+                                            'blue' : 'red'
+                                        }" 
+                                        writeToDom="true">
+                                    </core:CustomData>
+                                </customData>
+                            </Text>
+
+                            
+
+                            <!-- <Text text="{table>FiStyle}"></Text> -->
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column hAlign="Center">
+                        <Label text="반제된 원전표번호"></Label>
+                        <table:template>
+                            <Text text= "{table>PaymentFiNo}"
+                            ></Text>
+                            <!-- <Text text="{table>FiStyle}"></Text> -->
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column hAlign="Center">
+                        <Label text="역분개 전표번호"></Label>
+                        <table:template>
+                            <Text text= "{table>FlagFiNo}"
+                            ></Text>
+                            <!-- <Text text="{table>FiStyle}"></Text> -->
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column hAlign="Center">
+                        <Label text="전기일"></Label>
+                        <table:template>
+                            <Text text= "{ 
+                                path: 'table>FiPostDate',
+                                type: 'sap.ui.model.type.Date'
+                                }" ></Text>
+                        </table:template>
+                    </table:Column>
+
+                    <table:Column hAlign="Center">
+                        <Label text="생성일"></Label>
+                        <table:template>
+                            <Text text="{ 
+                                path: 'table>Cdate',
+                                type: 'sap.ui.model.type.Date'
+                                }" ></Text>
+                        </table:template>
+                    </table:Column>
+                </table:columns>
+                <table:rowSettingsTemplate>
+                    <table:RowSettings highlight="{= 
+                        ( ${table>FiStyle} === 'RE' ) ? 'Error' : 
+                        ( ${table>FiStyle} === 'PO' ) ? 'Information'
+                        : 'Success' 
+                    }" />
+                </table:rowSettingsTemplate>
+                <table:rowActionTemplate>
+                    <table:RowAction>
+                        <table:items>
+                            <table:RowActionItem type="Navigation" press="onRowActionPress"></table:RowActionItem>
+                        </table:items>
+                    </table:RowAction>
+                </table:rowActionTemplate>
+
+            </table:Table>
+        </f:content>
+        <f:footer>
+            <OverflowToolbar >
+                <HBox
+                    width="70px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                         src="sap-icon://circle-task-2"
+                        color="green">
+                        
+                    </core:Icon>
+
+                    <Text text="일반전표"></Text>
+                </HBox>
+
+                <HBox
+                    width="85px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                         src="sap-icon://circle-task-2"
+                        color="red">
+                        
+                    </core:Icon>
+
+                    <Text text="역분개전표"></Text>
+                </HBox> 
+                                <HBox
+                    width="70px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                        src="sap-icon://circle-task-2"
+                        color="blue">
+                        
+                    </core:Icon>
+
+                    <Text text="반제전표"></Text>
+                </HBox>
+                                <!-- <HBox
+                    width="70px" 
+                    justifyContent="SpaceBetween" alignItems="Center" alignContent="Center">
+                    <core:Icon 
+                        size="0.5rem"
+                        src="sap-icon://tri-state"
+                        color="green">
+                        
+                    </core:Icon>
+
+                    <Text text="success"></Text>
+                </HBox>  -->
+                <ToolbarSpacer ></ToolbarSpacer>
+                <Button type = "Accept" text="수정" visible="{= !${view>/editMode}}" 
+                press="onEdit" />    
+                <Button type = "Reject" text="역분개" visible="{= ${view>/editMode}}"
+                press="onDelete" />
+                <Button type = "Back" text="취소" visible="{= ${view>/editMode}}"
+                press="onCancel" />
+            </OverflowToolbar>
+        </f:footer>
+    <!-- </Page> -->
+    </f:DynamicPage>
+</mvc:View>

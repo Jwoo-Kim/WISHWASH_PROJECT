@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="ZBO_FI_TEST2_SRV" xml:lang="en" sap:schema-version="1" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <EntityType Name="zbbfit_aoj_h" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="FiNo"/>
+                </Key>
+                <Property Name="FiNo" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="전표번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FlagFiNo" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="역분개 전표번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="PaymentFiNo" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="원전표번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiYear" Type="Edm.String" MaxLength="4" sap:unicode="false" sap:label="회계연도" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiStyle" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="전표유형" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="State" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="구분" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiPostDate" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="전기일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Deadline" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="입금기한" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TransCd" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="거래처코드" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TransNm" Type="Edm.String" MaxLength="40" sap:unicode="false" sap:label="거래처이름" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiMonth" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="월" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Detail" Type="Edm.String" MaxLength="40" sap:unicode="false" sap:label="적요" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Flag" Type="Edm.String" MaxLength="1" sap:unicode="false" sap:label="FLAG" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="PaymentFlag" Type="Edm.String" MaxLength="1" sap:unicode="false" sap:label="반제 FLAG" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="InvNo" Type="Edm.String" MaxLength="13" sap:unicode="false" sap:label="인보이스번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Dflag" Type="Edm.Boolean" sap:unicode="false" sap:label="삭제플래그" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Cuser" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="생성자" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Cdate" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="생성일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Ctime" Type="Edm.Time" Precision="0" sap:unicode="false" sap:label="생성시간" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Uuser" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="수정자" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Udate" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="수정일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Utime" Type="Edm.Time" Precision="0" sap:unicode="false" sap:label="수정시간" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <NavigationProperty Name="items" Relationship="ZBO_FI_TEST2_SRV.zbbfit_aoj_association" FromRole="FromRole_zbbfit_aoj_association" ToRole="ToRole_zbbfit_aoj_association"/>
+            </EntityType>
+            <EntityType Name="fiStyle" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="FiStyle"/>
+                </Key>
+                <Property Name="FiStyle" Type="Edm.String" Nullable="false" MaxLength="2" sap:unicode="false" sap:label="전표유형" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+            </EntityType>
+            <EntityType Name="fiYear" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="FiYear"/>
+                </Key>
+                <Property Name="FiYear" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:label="회계연도" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+            </EntityType>
+            <EntityType Name="zbbfit_aoj_i" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="FiNo"/>
+                    <PropertyRef Name="FiYear"/>
+                    <PropertyRef Name="FiLn"/>
+                </Key>
+                <Property Name="FiNo" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="전표번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiYear" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:label="회계연도" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiLn" Type="Edm.String" Nullable="false" MaxLength="4" sap:unicode="false" sap:label="전표라인" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Payment" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="반제전표" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="State" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="구분" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiState" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="거래구분" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="AccountNo" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="계정번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Money" Type="Edm.Decimal" Precision="16" Scale="3" sap:unicode="false" sap:unit="Currency" sap:label="가격" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Currency" Type="Edm.String" MaxLength="5" sap:unicode="false" sap:label="화폐단위" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false" sap:semantics="currency-code"/>
+                <Property Name="Positions" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="차변/대변" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="MatCd" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="자재코드" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="SpCd" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="공급업체코드" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="ClearDt" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="반제일자" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Detail" Type="Edm.String" MaxLength="40" sap:unicode="false" sap:label="적요" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiPostDate" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="전기일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Deadline" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="입금기한" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TransCd" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="거래처코드" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TransNm" Type="Edm.String" MaxLength="40" sap:unicode="false" sap:label="거래처이름" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Dflag" Type="Edm.Boolean" sap:unicode="false" sap:label="삭제플래그" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Cuser" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="생성자" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Cdate" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="생성일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Ctime" Type="Edm.Time" Precision="0" sap:unicode="false" sap:label="생성시간" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Uuser" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="수정자" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Udate" Type="Edm.DateTime" Precision="11" sap:unicode="false" sap:label="수정일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Utime" Type="Edm.Time" Precision="0" sap:unicode="false" sap:label="수정시간" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+            </EntityType>
+            <EntityType Name="cancel_bill" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="FiNo"/>
+                </Key>
+                <Property Name="FiNo" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="전표번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiYear" Type="Edm.String" MaxLength="4" sap:unicode="false" sap:label="회계연도" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiStyle" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="전표유형" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="State" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="구분" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiPostDate" Type="Edm.DateTime" Precision="7" sap:unicode="false" sap:label="전기일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Deadline" Type="Edm.DateTime" Precision="7" sap:unicode="false" sap:label="입금기한" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TransCd" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="거래처코드" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TransNm" Type="Edm.String" MaxLength="40" sap:unicode="false" sap:label="거래처이름" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FiMonth" Type="Edm.String" MaxLength="2" sap:unicode="false" sap:label="월" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Detail" Type="Edm.String" MaxLength="40" sap:unicode="false" sap:label="적요" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Flag" Type="Edm.String" MaxLength="1" sap:unicode="false" sap:label="역분개 여부" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="PaymentFlag" Type="Edm.String" MaxLength="1" sap:unicode="false" sap:label="반제 FLAG" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="InvNo" Type="Edm.String" MaxLength="13" sap:unicode="false" sap:label="인보이스번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Dflag" Type="Edm.Boolean" sap:unicode="false" sap:label="삭제플래그" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Cuser" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="생성자" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Cdate" Type="Edm.DateTime" Precision="7" sap:unicode="false" sap:label="생성일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Ctime" Type="Edm.Time" Precision="0" sap:unicode="false" sap:label="생성시간" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Uuser" Type="Edm.String" MaxLength="12" sap:unicode="false" sap:label="수정자" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Udate" Type="Edm.DateTime" Precision="7" sap:unicode="false" sap:label="수정일" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Utime" Type="Edm.Time" Precision="0" sap:unicode="false" sap:label="수정시간" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="FlagFiNo" Type="Edm.String" MaxLength="10" sap:unicode="false" sap:label="역분개 전표번호" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+            </EntityType>
+            <Association Name="zbbfit_aoj_association" sap:content-version="1">
+                <End Type="ZBO_FI_TEST2_SRV.zbbfit_aoj_h" Multiplicity="1" Role="FromRole_zbbfit_aoj_association"/>
+                <End Type="ZBO_FI_TEST2_SRV.zbbfit_aoj_i" Multiplicity="*" Role="ToRole_zbbfit_aoj_association"/>
+                <ReferentialConstraint>
+                    <Principal Role="FromRole_zbbfit_aoj_association">
+                        <PropertyRef Name="FiNo"/>
+                    </Principal>
+                    <Dependent Role="ToRole_zbbfit_aoj_association">
+                        <PropertyRef Name="FiNo"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <EntityContainer Name="ZBO_FI_TEST2_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx">
+                <EntitySet Name="zbbfit_aoj_hSet" EntityType="ZBO_FI_TEST2_SRV.zbbfit_aoj_h" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <EntitySet Name="fiStyleSet" EntityType="ZBO_FI_TEST2_SRV.fiStyle" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <EntitySet Name="fiYearSet" EntityType="ZBO_FI_TEST2_SRV.fiYear" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <EntitySet Name="zbbfit_aoj_iSet" EntityType="ZBO_FI_TEST2_SRV.zbbfit_aoj_i" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <EntitySet Name="cancel_billSet" EntityType="ZBO_FI_TEST2_SRV.cancel_bill" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <AssociationSet Name="zbbfit_aoj_associationSet" Association="ZBO_FI_TEST2_SRV.zbbfit_aoj_association" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+                    <End EntitySet="zbbfit_aoj_hSet" Role="FromRole_zbbfit_aoj_association"/>
+                    <End EntitySet="zbbfit_aoj_iSet" Role="ToRole_zbbfit_aoj_association"/>
+                </AssociationSet>
+            </EntityContainer>
+            <atom:link rel="self" href="http://210.16.199.141:8001/sap/opu/odata/sap/ZBO_FI_TEST2_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+            <atom:link rel="latest-version" href="http://210.16.199.141:8001/sap/opu/odata/sap/ZBO_FI_TEST2_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

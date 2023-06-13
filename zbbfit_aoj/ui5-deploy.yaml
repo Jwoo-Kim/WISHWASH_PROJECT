@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "2.6"
+metadata:
+  name: sap.btp.zbbfitaoj
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        target:
+          url: http://210.16.199.141:8001
+          client: "100"
+        app:
+          name: ZBBFFI4010
+          description: 전표 역분개 및 수정 프로그램 [ 피오리 ]
+          package: ZBB
+          transport: MTSK900304
+        exclude:
+          - /test/
